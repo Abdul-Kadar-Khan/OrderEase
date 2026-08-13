@@ -1,0 +1,220 @@
+import { useState, useEffect } from 'preact/hooks';
+import { formatMoney } from '../../utils/formatMoney';
+import { updateLineItemQuantity } from '../../utils/api';
+import { BalanceDueRedirect } from '../BalanceDueRedirect/BalanceDueRedirect.jsx';
+import { useOrderEdit } from '../../context/OrderEditContext.jsx';
+
+function truncate(text, maxLength = 38) {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trimEnd() + '...';
+}
+
+/** Render the current order's line items with editable quantity controls. */
+export function EditableQtyOrderLineItems() {
+  const lines = shopify.lines.value;
+  const order = shopify.order.value;
+  const [activeLineId, setActiveLineId] = useState(null);
+
+  if (!lines || lines.length === 0) {
+    return (
+      <s-box padding="base" background="subdued" borderRadius="base">
+        <s-text color="subdued">No items found in this order.</s-text>
+      </s-box>
+    );
+  }
+
+  return (
+    <s-stack direction="block" gap="base">
+      <s-stack direction="block" gap="small-100">
+        <s-text type="strong">Modify ordered item quantities</s-text>
+        <s-text size="small" color="subdued">
+          Increase or reduce product counts below. Decreasing item counts initiates an automated balance refund or credit, while increases will generate an instant secure payment confirmation.
+        </s-text>
+      </s-stack>
+
+      <s-scroll-box maxBlockSize="220px" accessibilityLabel="Editable order line items list">
+        <s-stack direction="block" gap="small-200">
+          {lines.map((line) => (
+            <EditableLineItem
+              key={line.id}
+              line={line}
+              orderId={order.id}
+              activeLineId={activeLineId}
+              setActiveLineId={setActiveLineId}
+            />
+          ))}
+        </s-stack>
+      </s-scroll-box>
+    </s-stack>
+  );
+}
+
+function EditableLineItem({ line, orderId, activeLineId, setActiveLineId }) {
+  const { merchandise, quantity: initialQuantity, cost } = line;
+  const [quantity, setQuantity] = useState(initialQuantity);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+  const [isCheaper, setIsCheaper] = useState(false);
+  const [currentSavedQuantity, setCurrentSavedQuantity] = useState(initialQuantity);
+  const { notifyUpdateSuccess } = useOrderEdit();
+
+  const clearMessages = () => {
+    setLastResult(null);
+    setSuccess(false);
+    setIsCheaper(false);
+    setError(null);
+  };
+
+  // Clear messages when another line item becomes active/edited
+  useEffect(() => {
+    if (activeLineId && activeLineId !== line.id) {
+      clearMessages();
+    }
+  }, [activeLineId, line.id]);
+
+  const title = merchandise.product
+    ? merchandise.product.vendor
+      ? `${merchandise.title}`
+      : merchandise.title
+    : merchandise.title;
+
+  const options = (merchandise.selectedOptions || [])
+    .filter((o) => o.value !== 'Default Title')
+    .map((o) => `${o.name}: ${o.value}`)
+    .join(' • ');
+
+  const unitAmount = cost?.totalAmount?.amount ? Number(cost.totalAmount.amount) / (initialQuantity || 1) : 0;
+  const currentTotalMoney = cost?.totalAmount ? {
+    amount: (unitAmount * (quantity || 0)).toFixed(2),
+    currencyCode: cost.totalAmount.currencyCode,
+  } : null;
+  const priceDisplay = currentTotalMoney ? formatMoney(currentTotalMoney) : '';
+
+  const handleUpdate = async () => {
+    if (setActiveLineId) setActiveLineId(line.id);
+    clearMessages();
+    try {
+      setLoading(true);
+      const cheaper = quantity < currentSavedQuantity;
+      const result = await updateLineItemQuantity({ orderId, lineItemId: line.id, quantity });
+      setLastResult(result);
+      setCurrentSavedQuantity(quantity);
+      notifyUpdateSuccess(result?.order?.statusPageUrl);
+
+      if (result.balanceDue?.amount > 0) {
+        // Balance due notice rendered statically
+      } else if (cheaper) {
+        setIsCheaper(true);
+      } else {
+        setSuccess(true);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Could not update quantity');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setQuantity(currentSavedQuantity);
+    clearMessages();
+  };
+
+  const hasChanges = quantity !== currentSavedQuantity;
+
+  return (
+    <s-box background="surface" padding="base" borderRadius="base" borderWidth="base">
+      <s-stack direction="block" gap="base">
+        <s-stack direction="inline" alignItems="center" gap="base" justifyContent="space-between">
+          <s-stack direction="inline" alignItems="center" gap="base">
+            <s-box inlineSize="64px">
+              {merchandise.image ? (
+                <s-image
+                  src={merchandise.image.url}
+                  alt={merchandise.image.altText || title}
+                  aspectRatio="1"
+                  borderRadius="base"
+                />
+              ) : (
+                <s-box padding="base" background="subdued" borderRadius="base">
+                  <s-icon type="image" size="base" tone="neutral" />
+                </s-box>
+              )}
+            </s-box>
+
+            <s-stack direction="block" gap="small-100">
+              <s-text type="strong">{truncate(title, 42)}</s-text>
+              {options ? <s-text size="small" color="subdued">{truncate(options, 40)}</s-text> : null}
+              <s-text size="small" color="subdued">Unit cost: {cost?.totalAmount ? formatMoney({ amount: unitAmount.toFixed(2), currencyCode: cost.totalAmount.currencyCode }) : 'N/A'}</s-text>
+            </s-stack>
+          </s-stack>
+
+          <s-stack direction="inline" gap="base" alignItems="center" justifyContent="end">
+            <s-number-field
+              label="Qty"
+              value={String(quantity)}
+              onInput={(e) => {
+                const target = e.currentTarget;
+                if (target && 'value' in target) {
+                  setQuantity(Number(target.value));
+                  if (setActiveLineId) setActiveLineId(line.id);
+                  clearMessages();
+                }
+              }}
+              step={1}
+              min={1}
+              max={100}
+              disabled={loading}
+            ></s-number-field>
+
+            {priceDisplay ? (
+              <s-box padding="small-100">
+                <s-text type="strong">
+                  {priceDisplay}
+                </s-text>
+              </s-box>
+            ) : null}
+          </s-stack>
+        </s-stack>
+
+        {/* Unsaved changes control bar */}
+        {hasChanges && !lastResult && !isCheaper && !success && (
+          <s-box background="subdued" padding="small-200" borderRadius="base">
+            <s-stack direction="inline" alignItems="center" justifyContent="space-between" gap="base">
+              <s-text size="small" tone="warning">
+                Unsaved change: set to {quantity} (originally {currentSavedQuantity}).
+              </s-text>
+              <s-stack direction="inline" gap="small-200">
+                <s-button variant="tertiary" disabled={loading} onClick={handleReset}>
+                  Reset
+                </s-button>
+                <s-button variant="primary" disabled={loading} onClick={handleUpdate}>
+                  {loading ? 'Updating...' : 'Save quantity'}
+                </s-button>
+              </s-stack>
+            </s-stack>
+          </s-box>
+        )}
+        
+        {error && <s-banner tone="critical">{error}</s-banner>}
+        
+        {lastResult?.balanceDue?.amount > 0 ? (
+          <BalanceDueRedirect
+            balanceDue={lastResult.balanceDue}
+            statusPageUrl={lastResult?.order?.statusPageUrl}
+          />
+        ) : isCheaper ? (
+          <s-banner tone="success">
+            Quantity reduced successfully! Your remaining balance will be credited back to your account within 3 to 4 working days.
+          </s-banner>
+        ) : (
+          success && <s-banner tone="success">Quantity updated successfully! Your order has been adjusted.</s-banner>
+        )}
+      </s-stack>
+    </s-box>
+  );
+}

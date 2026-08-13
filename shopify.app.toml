@@ -1,0 +1,60 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "d63bb57ad00ed8a805102bb439b85021"
+application_url = "https://order-edit-app-production.up.railway.app"
+embedded = true
+name = "OrderEase"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+# write_order_edits + read_orders added for the "Add a product to your order" feature
+# read_discounts added for the "Apply a discount code" feature (codeDiscountNodeByCode lookup)
+scopes = "write_products,write_metaobjects,write_metaobject_definitions,read_orders,write_orders,read_order_edits,write_order_edits,read_customers,write_customers,read_discounts,read_shipping"
+
+[product.metafields.app.demo_info]
+type = "single_line_text_field"
+name = "Demo Source Info"
+description = "Tracks products created by the Shopify app template for development"
+
+  [product.metafields.app.demo_info.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example]
+name = "Example"
+description = "An example metaobject definition created by this template"
+
+  [metaobjects.app.example.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example.fields.title]
+name = "Title"
+type = "single_line_text_field"
+required = true
+
+[metaobjects.app.example.fields.description]
+name = "Description"
+type = "multi_line_text_field"
+
+[webhooks]
+api_version = "2026-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+[auth]
+redirect_urls = [ "https://order-edit-app-production.up.railway.app/api/auth",
+                  "https://order-edit-app-production.up.railway.app/auth/shopify/callback"
+                ]
+
+[build]
+automatically_update_urls_on_dev = false
+
+[app_proxy]
+url = "https://order-edit-app-production.up.railway.app"
+subpath = "order-edit"
+prefix = "apps"
