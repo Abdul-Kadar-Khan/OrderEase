@@ -51,7 +51,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const pdfBuffer = await generateInvoicePdf(order);
     const filename = `invoice-${order.name.replace(/[^a-zA-Z0-9-_]/g, "")}.pdf`;
 
-    return new Response(pdfBuffer, {
+    return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

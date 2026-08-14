@@ -1,5 +1,5 @@
 // TODO: replace with your app's deployed URL (must match SHOPIFY_APP_URL / application_url).
-const APP_URL = 'https://order-edit-app-production.up.railway.app';
+const APP_URL = 'https://sally-perception-premises-relating.trycloudflare.com';
 
 /** 
  * Adds a product variant to the current order.

@@ -32,3 +32,41 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+model ServiceSettings {
+  id        String              // service key e.g. "add-product"
+  shop      String              // merchant shop domain
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@id([shop, id])              // composite PK: one row per service per shop
+}
+
+model OrderEditTimeLimit {
+  shop        String   @id        // merchant shop domain
+  timeLimit   String   @default("1h") // preset e.g. "30m", "1h", "2h", "1d", "2d", "custom"
+  customValue Int?                // custom value number
+  customUnit  String?             // custom unit e.g. "minutes", "hours", "days"
+  updatedAt   DateTime @updatedAt
+}
+
+model EditedOrder {
+  id        String   @id @default(uuid())
+  shop      String
+  orderId   String
+  source    String   @default("customer_account_ui") // "customer_account_ui" or "checkout_ui"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shop, orderId])
+}
+
+model FeatureUsage {
+  featureId String   // e.g. "add-product", "edit-quantity", "cancel-order"
+  shop      String
+  usedCount Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@id([shop, featureId])
+}
+

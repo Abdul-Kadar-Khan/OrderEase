@@ -52,9 +52,9 @@ redirect_urls = [ "https://order-edit-app-production.up.railway.app/api/auth",
                 ]
 
 [build]
-automatically_update_urls_on_dev = false
+automatically_update_urls_on_dev = true
 
 [app_proxy]
 url = "https://order-edit-app-production.up.railway.app"
-subpath = "order-edit"
+subpath = "order-ease" 
 prefix = "apps"
