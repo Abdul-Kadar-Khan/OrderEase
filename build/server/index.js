@@ -228,7 +228,7 @@ async function loader$r({
 async function action$o({
   request
 }) {
-  var _a2, _b, _c, _d, _e, _f, _g;
+  var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const {
     sessionToken,
     cors
@@ -263,6 +263,60 @@ async function action$o({
   }
   const calculatedLineItemId = lineItemId.replace("LineItem", "CalculatedLineItem");
   try {
+    let actualQuantity = Number(quantity);
+    let quantityMessage = null;
+    if (actualQuantity > 0) {
+      try {
+        const lineItemRes = await admin.graphql(`#graphql
+          query GetLineItemVariant($id: ID!) {
+            order(id: $id) {
+              lineItems(first: 100) {
+                nodes {
+                  id
+                  currentQuantity
+                  quantity
+                  variant {
+                    id
+                    inventoryQuantity
+                  }
+                }
+              }
+            }
+          }`, {
+          variables: {
+            id: orderId
+          }
+        });
+        const lineItemJson = await lineItemRes.json();
+        const rawLineItemId = lineItemId.replace("CalculatedLineItem", "LineItem");
+        const node = (_d = (_c = (_b = (_a2 = lineItemJson.data) == null ? void 0 : _a2.order) == null ? void 0 : _b.lineItems) == null ? void 0 : _c.nodes) == null ? void 0 : _d.find((n) => n.id === rawLineItemId || n.id === lineItemId);
+        const currentQty = (node == null ? void 0 : node.currentQuantity) ?? (node == null ? void 0 : node.quantity) ?? 0;
+        const invQty = (_e = node == null ? void 0 : node.variant) == null ? void 0 : _e.inventoryQuantity;
+        if (typeof invQty === "number") {
+          const maxAllowed = currentQty + invQty;
+          if (actualQuantity > maxAllowed) {
+            if (invQty <= 0) {
+              return cors(Response.json({
+                userErrors: [{
+                  message: `This product is not available in the required quantity of ${actualQuantity}. No additional stock is available in store (you already have all ${currentQty} units in your order).`
+                }]
+              }, {
+                status: 422
+              }));
+            }
+            return cors(Response.json({
+              userErrors: [{
+                message: `This product is not available in the required quantity of ${actualQuantity}. Only ${invQty} additional units are available in stock. The quantity has been adjusted to ${maxAllowed}. Click 'Save quantity' again to confirm.`
+              }]
+            }, {
+              status: 422
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn("Server inventory check skipped:", e);
+      }
+    }
     const beginResponse = await admin.graphql(`#graphql
       mutation OrderEditBegin($id: ID!) {
         orderEditBegin(id: $id) {
@@ -275,7 +329,7 @@ async function action$o({
       }
     });
     const beginJson = await beginResponse.json();
-    const beginErrors = ((_b = (_a2 = beginJson.data) == null ? void 0 : _a2.orderEditBegin) == null ? void 0 : _b.userErrors) ?? [];
+    const beginErrors = ((_g = (_f = beginJson.data) == null ? void 0 : _f.orderEditBegin) == null ? void 0 : _g.userErrors) ?? [];
     if (beginErrors.length) {
       return cors(Response.json({
         userErrors: beginErrors
@@ -285,8 +339,8 @@ async function action$o({
     }
     const calculatedOrderId = beginJson.data.orderEditBegin.calculatedOrder.id;
     const updateResponse = await admin.graphql(`#graphql
-      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!) {
-        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity) {
+      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!, $restock: Boolean) {
+        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity, restock: $restock) {
           calculatedOrder { id }
           userErrors { field message }
         }
@@ -294,11 +348,12 @@ async function action$o({
       variables: {
         id: calculatedOrderId,
         lineItemId: calculatedLineItemId,
-        quantity: Number(quantity)
+        quantity: actualQuantity,
+        restock: true
       }
     });
     const updateJson = await updateResponse.json();
-    const updateErrors = ((_d = (_c = updateJson.data) == null ? void 0 : _c.orderEditSetQuantity) == null ? void 0 : _d.userErrors) ?? [];
+    const updateErrors = ((_i = (_h = updateJson.data) == null ? void 0 : _h.orderEditSetQuantity) == null ? void 0 : _i.userErrors) ?? [];
     if (updateErrors.length) {
       return cors(Response.json({
         userErrors: updateErrors
@@ -325,7 +380,7 @@ async function action$o({
       }
     });
     const commitJson = await commitResponse.json();
-    const commitErrors = ((_f = (_e = commitJson.data) == null ? void 0 : _e.orderEditCommit) == null ? void 0 : _f.userErrors) ?? [];
+    const commitErrors = ((_k = (_j = commitJson.data) == null ? void 0 : _j.orderEditCommit) == null ? void 0 : _k.userErrors) ?? [];
     if (commitErrors.length) {
       return cors(Response.json({
         userErrors: commitErrors
@@ -334,7 +389,7 @@ async function action$o({
       }));
     }
     const order = commitJson.data.orderEditCommit.order;
-    const balanceDue = ((_g = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _g.shopMoney) ?? null;
+    const balanceDue = ((_l = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _l.shopMoney) ?? null;
     const owesRefund = balanceDue ? parseFloat(balanceDue.amount) < 0 : false;
     await addOrderTags(admin, orderId, owesRefund);
     await trackOrderEdit({
@@ -346,6 +401,7 @@ async function action$o({
     return cors(Response.json({
       order,
       balanceDue,
+      quantityMessage,
       userErrors: []
     }));
   } catch (err) {
@@ -383,7 +439,7 @@ async function loader$q({
 async function action$n({
   request
 }) {
-  var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+  var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
   const {
     sessionToken,
     cors
@@ -419,6 +475,40 @@ async function action$n({
   }
   const calculatedLineItemId = oldLineItemId.replace("LineItem", "CalculatedLineItem");
   try {
+    let actualQuantity = Number(quantity);
+    let quantityMessage = null;
+    try {
+      const variantRes = await admin.graphql(`#graphql
+        query GetVariantStock($id: ID!) {
+          productVariant(id: $id) {
+            id
+            inventoryQuantity
+          }
+        }`, {
+        variables: {
+          id: newVariantId
+        }
+      });
+      const variantJson = await variantRes.json();
+      const invQty = (_b = (_a2 = variantJson.data) == null ? void 0 : _a2.productVariant) == null ? void 0 : _b.inventoryQuantity;
+      if (typeof invQty === "number") {
+        if (invQty <= 0) {
+          return cors(Response.json({
+            userErrors: [{
+              message: "Selected replacement variant is out of stock."
+            }]
+          }, {
+            status: 422
+          }));
+        }
+        if (actualQuantity > invQty) {
+          quantityMessage = `Only ${invQty} quantity available in stock. Swapped with ${invQty} quantity instead of ${actualQuantity}.`;
+          actualQuantity = invQty;
+        }
+      }
+    } catch (e) {
+      console.warn("Server inventory check skipped:", e);
+    }
     const beginResponse = await admin.graphql(`#graphql
       mutation OrderEditBegin($id: ID!) {
         orderEditBegin(id: $id) {
@@ -431,7 +521,7 @@ async function action$n({
       }
     });
     const beginJson = await beginResponse.json();
-    if ((_c = (_b = (_a2 = beginJson.data) == null ? void 0 : _a2.orderEditBegin) == null ? void 0 : _b.userErrors) == null ? void 0 : _c.length) {
+    if ((_e = (_d = (_c = beginJson.data) == null ? void 0 : _c.orderEditBegin) == null ? void 0 : _d.userErrors) == null ? void 0 : _e.length) {
       return cors(Response.json({
         userErrors: beginJson.data.orderEditBegin.userErrors
       }, {
@@ -440,8 +530,8 @@ async function action$n({
     }
     const calculatedOrderId = beginJson.data.orderEditBegin.calculatedOrder.id;
     const removeResponse = await admin.graphql(`#graphql
-      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!) {
-        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity) {
+      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!, $restock: Boolean) {
+        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity, restock: $restock) {
           calculatedOrder { id }
           userErrors { field message }
         }
@@ -449,11 +539,12 @@ async function action$n({
       variables: {
         id: calculatedOrderId,
         lineItemId: calculatedLineItemId,
-        quantity: 0
+        quantity: 0,
+        restock: true
       }
     });
     const removeJson = await removeResponse.json();
-    if ((_f = (_e = (_d = removeJson.data) == null ? void 0 : _d.orderEditSetQuantity) == null ? void 0 : _e.userErrors) == null ? void 0 : _f.length) {
+    if ((_h = (_g = (_f = removeJson.data) == null ? void 0 : _f.orderEditSetQuantity) == null ? void 0 : _g.userErrors) == null ? void 0 : _h.length) {
       return cors(Response.json({
         userErrors: removeJson.data.orderEditSetQuantity.userErrors
       }, {
@@ -470,11 +561,11 @@ async function action$n({
       variables: {
         id: calculatedOrderId,
         variantId: newVariantId,
-        quantity: Number(quantity)
+        quantity: actualQuantity
       }
     });
     const addJson = await addResponse.json();
-    if ((_i = (_h = (_g = addJson.data) == null ? void 0 : _g.orderEditAddVariant) == null ? void 0 : _h.userErrors) == null ? void 0 : _i.length) {
+    if ((_k = (_j = (_i = addJson.data) == null ? void 0 : _i.orderEditAddVariant) == null ? void 0 : _j.userErrors) == null ? void 0 : _k.length) {
       return cors(Response.json({
         userErrors: addJson.data.orderEditAddVariant.userErrors
       }, {
@@ -500,7 +591,7 @@ async function action$n({
       }
     });
     const commitJson = await commitResponse.json();
-    if ((_l = (_k = (_j = commitJson.data) == null ? void 0 : _j.orderEditCommit) == null ? void 0 : _k.userErrors) == null ? void 0 : _l.length) {
+    if ((_n = (_m = (_l = commitJson.data) == null ? void 0 : _l.orderEditCommit) == null ? void 0 : _m.userErrors) == null ? void 0 : _n.length) {
       return cors(Response.json({
         userErrors: commitJson.data.orderEditCommit.userErrors
       }, {
@@ -508,7 +599,7 @@ async function action$n({
       }));
     }
     const order = commitJson.data.orderEditCommit.order;
-    const balanceDue = ((_m = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _m.shopMoney) ?? null;
+    const balanceDue = ((_o = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _o.shopMoney) ?? null;
     const owesRefund = balanceDue ? parseFloat(balanceDue.amount) < 0 : false;
     await addOrderTags(admin, orderId, owesRefund);
     await trackOrderEdit({
@@ -520,6 +611,7 @@ async function action$n({
     return cors(Response.json({
       order,
       balanceDue,
+      quantityMessage,
       userErrors: []
     }));
   } catch (err) {
@@ -557,7 +649,7 @@ async function loader$p({
 async function action$m({
   request
 }) {
-  var _a2, _b, _c, _d, _e, _f, _g;
+  var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
   const {
     sessionToken,
     cors
@@ -591,6 +683,40 @@ async function action$m({
     }));
   }
   try {
+    let actualQuantity = Number(quantity);
+    let quantityMessage = null;
+    try {
+      const variantRes = await admin.graphql(`#graphql
+        query GetVariantStock($id: ID!) {
+          productVariant(id: $id) {
+            id
+            inventoryQuantity
+          }
+        }`, {
+        variables: {
+          id: variantId
+        }
+      });
+      const variantJson = await variantRes.json();
+      const invQty = (_b = (_a2 = variantJson.data) == null ? void 0 : _a2.productVariant) == null ? void 0 : _b.inventoryQuantity;
+      if (typeof invQty === "number") {
+        if (invQty <= 0) {
+          return cors(Response.json({
+            userErrors: [{
+              message: "Product is currently out of stock."
+            }]
+          }, {
+            status: 422
+          }));
+        }
+        if (actualQuantity > invQty) {
+          quantityMessage = `Only ${invQty} quantity available in stock. Added ${invQty} quantity to your order instead of ${actualQuantity}.`;
+          actualQuantity = invQty;
+        }
+      }
+    } catch (e) {
+      console.warn("Server inventory check skipped:", e);
+    }
     const beginResponse = await admin.graphql(`#graphql
       mutation OrderEditBegin($id: ID!) {
         orderEditBegin(id: $id) {
@@ -603,7 +729,7 @@ async function action$m({
       }
     });
     const beginJson = await beginResponse.json();
-    const beginErrors = ((_b = (_a2 = beginJson.data) == null ? void 0 : _a2.orderEditBegin) == null ? void 0 : _b.userErrors) ?? [];
+    const beginErrors = ((_d = (_c = beginJson.data) == null ? void 0 : _c.orderEditBegin) == null ? void 0 : _d.userErrors) ?? [];
     if (beginErrors.length) {
       return cors(Response.json({
         userErrors: beginErrors
@@ -624,11 +750,11 @@ async function action$m({
       variables: {
         id: calculatedOrderId,
         variantId,
-        quantity
+        quantity: actualQuantity
       }
     });
     const addJson = await addResponse.json();
-    const addErrors = ((_d = (_c = addJson.data) == null ? void 0 : _c.orderEditAddVariant) == null ? void 0 : _d.userErrors) ?? [];
+    const addErrors = ((_f = (_e = addJson.data) == null ? void 0 : _e.orderEditAddVariant) == null ? void 0 : _f.userErrors) ?? [];
     if (addErrors.length) {
       return cors(Response.json({
         userErrors: addErrors
@@ -655,7 +781,7 @@ async function action$m({
       }
     });
     const commitJson = await commitResponse.json();
-    const commitErrors = ((_f = (_e = commitJson.data) == null ? void 0 : _e.orderEditCommit) == null ? void 0 : _f.userErrors) ?? [];
+    const commitErrors = ((_h = (_g = commitJson.data) == null ? void 0 : _g.orderEditCommit) == null ? void 0 : _h.userErrors) ?? [];
     if (commitErrors.length) {
       return cors(Response.json({
         userErrors: commitErrors
@@ -664,7 +790,7 @@ async function action$m({
       }));
     }
     const order = commitJson.data.orderEditCommit.order;
-    const balanceDue = ((_g = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _g.shopMoney) ?? null;
+    const balanceDue = ((_i = order == null ? void 0 : order.totalOutstandingSet) == null ? void 0 : _i.shopMoney) ?? null;
     const owesRefund = balanceDue ? parseFloat(balanceDue.amount) < 0 : false;
     await addOrderTags(admin, orderId, owesRefund);
     await trackOrderEdit({
@@ -676,6 +802,7 @@ async function action$m({
     return cors(Response.json({
       order,
       balanceDue,
+      quantityMessage,
       userErrors: []
     }));
   } catch (err) {

@@ -1,6 +1,6 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { formatMoney } from '../../utils/formatMoney';
-import { addProductToOrder } from '../../utils/api';
+import { addProductToOrder, checkVariantQuantity } from '../../utils/api';
 
 /** Format a variant's selected options as "Size: M, Color: Blue". */
 function variantLabel(variant) {
@@ -16,15 +16,37 @@ function variantLabel(variant) {
  * then submits the add-to-order request.
  */
 export function VariantPicker({ product, orderId, onBack, onAdded }) {
+  const variants = product.variants?.nodes ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState(
-    product.variants?.nodes?.[0]?.id ?? null,
+    variants[0]?.id ?? null,
   );
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [liveInventory, setLiveInventory] = useState(null);
 
-  const variants = product.variants?.nodes ?? [];
   const hasMultipleVariants = variants.length > 1;
+  const selectedVariant = variants.find((v) => v.id === selectedVariantId) || variants[0];
+
+  // Fetch real-time inventory whenever selected variant changes
+  useEffect(() => {
+    if (!selectedVariantId) return;
+
+    let isCurrent = true;
+    checkVariantQuantity(selectedVariantId).then((res) => {
+      if (isCurrent && res && typeof res.quantityAvailable === 'number') {
+        setLiveInventory(res.quantityAvailable);
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedVariantId, selectedVariant]);
+
+  const availableStock = liveInventory;
+  const isOutOfStock = selectedVariant?.availableForSale === false;
+  const isQuantityExceeded = availableStock !== null && availableStock > 0 && quantity > availableStock;
 
   async function handleAdd() {
     if (!selectedVariantId) return;
@@ -33,14 +55,36 @@ export function VariantPicker({ product, orderId, onBack, onAdded }) {
     setError(null);
 
     try {
+      let qtyToAdd = quantity;
+      let qtyMessage = null;
+
+      const inventory = await checkVariantQuantity(selectedVariantId);
+      const avail = inventory?.quantityAvailable ?? availableStock;
+
+      if (inventory) {
+        if (!inventory.availableForSale) {
+          throw new Error('This item is currently out of stock.');
+        }
+        if (avail !== null && avail !== undefined) {
+          if (avail <= 0) {
+            throw new Error('This item is currently out of stock.');
+          }
+          if (quantity > avail) {
+            qtyToAdd = avail;
+            qtyMessage = `This product is not available in the required quantity of ${quantity}. Only ${avail} units are available in stock. Added ${avail} quantity to your order.`;
+          }
+        }
+      }
+
       const result = await addProductToOrder({
         orderId,
         variantId: selectedVariantId,
-        quantity,
+        quantity: qtyToAdd,
       });
 
-      shopify.toast.show('Product added to order');
-      onAdded(result);
+      const messageToToast = qtyMessage || 'Product added to order';
+      shopify.toast.show(messageToToast);
+      onAdded(result, qtyMessage || result.quantityMessage || null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err) || 'Failed to add product';
       setError(msg);
@@ -72,7 +116,14 @@ export function VariantPicker({ product, orderId, onBack, onAdded }) {
             <s-icon type="image" size="large" tone="neutral" />
           )}
         </s-box>
-        <s-text type="strong">{product.title}</s-text>
+        <s-stack direction="block" gap="none">
+          <s-text type="strong">{product.title}</s-text>
+          {availableStock !== null && availableStock !== undefined ? (
+            <s-text color={availableStock <= 0 ? 'critical' : 'subdued'}>
+              {availableStock <= 0 ? 'Out of stock' : `Available in stock: ${availableStock} units`}
+            </s-text>
+          ) : null}
+        </s-stack>
       </s-stack>
 
       {hasMultipleVariants && (
@@ -113,7 +164,8 @@ export function VariantPicker({ product, orderId, onBack, onAdded }) {
         label="Quantity"
         value={String(quantity)}
         min={1}
-        disabled={submitting}
+        max={availableStock && availableStock > 0 ? availableStock : 999}
+        disabled={submitting || isOutOfStock}
         onInput={(e) => {
           const target = e.currentTarget;
           if (target && 'value' in target) {
@@ -122,12 +174,24 @@ export function VariantPicker({ product, orderId, onBack, onAdded }) {
         }}
       />
 
+      {isQuantityExceeded ? (
+        <s-banner tone="warning">
+          This product is not available in the required quantity of {quantity}. Only {availableStock} unitss are available in stock. Adding to order will set quantity to {availableStock}.
+        </s-banner>
+      ) : null}
+
+      {isOutOfStock ? (
+        <s-banner tone="critical">
+          This product is currently out of stock and cannot be added.
+        </s-banner>
+      ) : null}
+
       {error ? <s-banner tone="critical">{error}</s-banner> : null}
 
       <s-stack direction="inline" justifyContent="end">
         <s-button
           variant="primary"
-          disabled={!selectedVariantId || submitting}
+          disabled={!selectedVariantId || submitting || isOutOfStock}
           loading={submitting}
           onClick={handleAdd}
         >

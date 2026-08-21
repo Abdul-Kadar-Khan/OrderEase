@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { formatMoney } from '../../utils/formatMoney';
-import { updateLineItemQuantity } from '../../utils/api';
+import { updateLineItemQuantity, checkVariantQuantity } from '../../utils/api';
 import { BalanceDueRedirect } from '../BalanceDueRedirect/BalanceDueRedirect.jsx';
 import { getExtensionLines, getExtensionOrderId, formatOrderId, safeNavigate } from '../../utils/shopifyHelpers';
 import useOrderSearch from '../../hooks/useorderSearch';
@@ -88,12 +88,14 @@ function EditableLineItem({ line, orderId, activeLineId, setActiveLineId }) {
   const [success, setSuccess] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   const [isCheaper, setIsCheaper] = useState(false);
+  const [quantityMsg, setQuantityMsg] = useState(null);
   const [currentSavedQuantity, setCurrentSavedQuantity] = useState(initialQuantity);
 
   const clearMessages = () => {
     setLastResult(null);
     setSuccess(false);
     setIsCheaper(false);
+    setQuantityMsg(null);
     setError(null);
   };
 
@@ -123,10 +125,65 @@ function EditableLineItem({ line, orderId, activeLineId, setActiveLineId }) {
     clearMessages();
     try {
       setLoading(true);
-      const cheaper = quantity < currentSavedQuantity;
-      const result = await updateLineItemQuantity({ orderId, lineItemId: line.id, quantity });
+
+      const variantId = merchandise?.id;
+      // Only perform stock availability check if increasing item quantity
+      if (variantId && quantity > currentSavedQuantity) {
+        const inventory = await checkVariantQuantity(variantId);
+        if (inventory) {
+          if (!inventory.availableForSale && inventory.quantityAvailable !== null && inventory.quantityAvailable <= 0) {
+            setQuantity(currentSavedQuantity);
+            setError(
+              `This product is not available in the required quantity of ${quantity}. No additional stock is available in store (you already have all ${currentSavedQuantity} units in your order).`,
+            );
+            return;
+          }
+          if (inventory.quantityAvailable !== null) {
+            const availInStore = inventory.quantityAvailable;
+            const maxAllowed = currentSavedQuantity + availInStore;
+
+            if (quantity > maxAllowed) {
+              if (availInStore <= 0) {
+                setQuantity(currentSavedQuantity);
+                setError(
+                  `This product is not available in the required quantity of ${quantity}. No additional stock is available in store (you already have all ${currentSavedQuantity} units in your order).`,
+                );
+                return;
+              } else {
+                setQuantity(maxAllowed);
+                setQuantityMsg(
+                  `This product is not available in the required quantity of ${quantity}. Only ${availInStore} additional units are available in stock. The quantity has been adjusted to ${maxAllowed}. Click 'Save quantity' again to confirm.`,
+                );
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      const targetQty = quantity;
+      const cheaper = targetQty < currentSavedQuantity;
+      const result = await updateLineItemQuantity({ orderId, lineItemId: line.id, quantity: targetQty });
+
+      if (result.userErrors && result.userErrors.length > 0) {
+        const errMsg = result.userErrors[0].message;
+        if (errMsg.includes("The quantity has been adjusted to")) {
+          const match = errMsg.match(/adjusted to (\d+)/);
+          if (match && match[1]) {
+            setQuantity(Number(match[1]));
+          }
+          setQuantityMsg(errMsg);
+          return;
+        }
+        throw new Error(errMsg);
+      }
+
+      const serverMsg = result.quantityMessage;
       setLastResult(result);
-      setCurrentSavedQuantity(quantity);
+      setCurrentSavedQuantity(targetQty);
+      if (serverMsg) {
+        setQuantityMsg(serverMsg);
+      }
 
       if (result.balanceDue?.amount > 0) {
         // Auto-redirect to payment page handled by BalanceDueRedirect
@@ -137,7 +194,16 @@ function EditableLineItem({ line, orderId, activeLineId, setActiveLineId }) {
       }
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Could not update quantity');
+      const errMsg = err instanceof Error ? err.message : 'Could not update quantity';
+      if (errMsg.includes("The quantity has been adjusted to")) {
+        const match = errMsg.match(/adjusted to (\d+)/);
+        if (match && match[1]) {
+          setQuantity(Number(match[1]));
+        }
+        setQuantityMsg(errMsg);
+      } else {
+        setError(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -224,6 +290,7 @@ function EditableLineItem({ line, orderId, activeLineId, setActiveLineId }) {
           </s-box>
         )}
         
+        {quantityMsg && <s-banner tone="warning">{quantityMsg}</s-banner>}
         {error && <s-banner tone="critical">{error}</s-banner>}
         
         {lastResult?.balanceDue?.amount > 0 ? (

@@ -93,6 +93,8 @@ function ModalSection({ title, subtitle, iconType, tone = "neutral", children })
   );
 }
 
+
+
 function SectionHeader({ title, description }) {
   return (
     <s-stack direction="block" gap="small-200" paddingBlockStart="base" paddingBlockEnd="small-200" inlineSize="100%">
@@ -451,16 +453,28 @@ function Extension() {
   }
 
   return (
-    <OrderEditContext.Provider value={{ notifyUpdateSuccess, needsRefresh, startRefreshCountdown }}>
+    <OrderEditContext.Provider value={{ notifyUpdateSuccess, needsRefresh, startRefreshCountdown, topPageCountdown }}>
+
+      {topPageCountdown !== null ? (
+        <s-box inlineSize="100%" padding="large">
+          <s-stack direction="block" alignItems="center" gap="large" inlineSize="100%">
+            <s-spinner size="large" accessibilityLabel="Refreshing order details..." />
+            <s-stack direction="block" alignItems="center" gap="small-200">
+              <s-text type="strong" size="medium">Order updated successfully!</s-text>
+              <s-text color="subdued">
+                Please wait while we refresh the page to show the latest details.
+              </s-text>
+              <s-text type="strong">
+                {topPageCountdown > 0
+                  ? `Refreshing page in ${topPageCountdown} second${topPageCountdown !== 1 ? 's' : ''}...`
+                  : 'Refreshing now...'}
+              </s-text>
+            </s-stack>
+          </s-stack>
+        </s-box>
+      ) : (
       <s-stack direction="block" gap="large" inlineSize="100%">
 
-        {topPageCountdown !== null && (
-          <s-banner tone="info">
-            {topPageCountdown > 0
-              ? `Refreshing page in ${topPageCountdown} second${topPageCountdown !== 1 ? 's' : ''}...`
-              : 'Refreshing page now...'}
-          </s-banner>
-        )}
 
         {isExpired ? (
           <s-banner tone="critical" title="Order Editing Window Expired">
@@ -724,6 +738,7 @@ function Extension() {
         )}
 
       </s-stack>
+      )}
     </OrderEditContext.Provider>
   );
 }

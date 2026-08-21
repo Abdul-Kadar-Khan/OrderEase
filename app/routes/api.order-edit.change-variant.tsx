@@ -44,6 +44,41 @@ export async function action({ request }: ActionFunctionArgs) {
   const calculatedLineItemId = oldLineItemId.replace("LineItem", "CalculatedLineItem");
 
   try {
+    let actualQuantity = Number(quantity);
+    let quantityMessage: string | null = null;
+
+    try {
+      const variantRes = await admin.graphql(
+        `#graphql
+        query GetVariantStock($id: ID!) {
+          productVariant(id: $id) {
+            id
+            inventoryQuantity
+          }
+        }`,
+        { variables: { id: newVariantId } },
+      );
+      const variantJson = await variantRes.json();
+      const invQty = variantJson.data?.productVariant?.inventoryQuantity;
+
+      if (typeof invQty === "number") {
+        if (invQty <= 0) {
+          return cors(
+            Response.json(
+              { userErrors: [{ message: "Selected replacement variant is out of stock." }] },
+              { status: 422 },
+            ),
+          );
+        }
+        if (actualQuantity > invQty) {
+          quantityMessage = `Only ${invQty} quantity available in stock. Swapped with ${invQty} quantity instead of ${actualQuantity}.`;
+          actualQuantity = invQty;
+        }
+      }
+    } catch (e) {
+      console.warn("Server inventory check skipped:", e);
+    }
+
     // Step 1: begin
     const beginResponse = await admin.graphql(
       `#graphql
@@ -61,16 +96,16 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     const calculatedOrderId = beginJson.data.orderEditBegin.calculatedOrder.id;
 
-    // Step 2: Set quantity to 0 (remove old variant)
+    // Step 2: Set quantity to 0 (remove old variant and restock stock quantity)
     const removeResponse = await admin.graphql(
       `#graphql
-      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!) {
-        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity) {
+      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!, $restock: Boolean) {
+        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity, restock: $restock) {
           calculatedOrder { id }
           userErrors { field message }
         }
       }`,
-      { variables: { id: calculatedOrderId, lineItemId: calculatedLineItemId, quantity: 0 } },
+      { variables: { id: calculatedOrderId, lineItemId: calculatedLineItemId, quantity: 0, restock: true } },
     );
     const removeJson = await removeResponse.json();
     if (removeJson.data?.orderEditSetQuantity?.userErrors?.length) {
@@ -86,7 +121,7 @@ export async function action({ request }: ActionFunctionArgs) {
           userErrors { field message }
         }
       }`,
-      { variables: { id: calculatedOrderId, variantId: newVariantId, quantity: Number(quantity) } },
+      { variables: { id: calculatedOrderId, variantId: newVariantId, quantity: actualQuantity } },
     );
     const addJson = await addResponse.json();
     if (addJson.data?.orderEditAddVariant?.userErrors?.length) {
@@ -132,7 +167,7 @@ export async function action({ request }: ActionFunctionArgs) {
       source,
     });
 
-    return cors(Response.json({ order, balanceDue, userErrors: [] }));
+    return cors(Response.json({ order, balanceDue, quantityMessage, userErrors: [] }));
   } catch (err: unknown) {
     console.error("[order-edit] Unexpected error:", err);
     return cors(Response.json({ userErrors: [{ message: err instanceof Error ? err.message : "Internal error" }] }, { status: 500 }));

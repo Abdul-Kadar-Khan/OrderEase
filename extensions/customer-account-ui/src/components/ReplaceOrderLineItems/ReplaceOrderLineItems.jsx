@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
 import { formatMoney } from '../../utils/formatMoney';
-import { changeLineItemVariant } from '../../utils/api';
+import { changeLineItemVariant, checkVariantQuantity } from '../../utils/api';
 import { ProductSearchBar } from '../AddProduct/ProductSearchBar.jsx';
 import { useProductSearch } from '../../hooks/useProductSearch.js';
 import { BalanceDueRedirect } from '../BalanceDueRedirect/BalanceDueRedirect.jsx';
 import { useOrderEdit } from '../../context/OrderEditContext.jsx';
+import useOrderSearch from '../../hooks/useorderSearch';
 
 function truncate(text, maxLength = 38) {
   if (!text) return '';
@@ -103,6 +104,7 @@ function ReplacementPicker({ selectedLine, orderId, onBack, onReplaced }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [quantityMsg, setQuantityMsg] = useState(null);
   const { notifyUpdateSuccess } = useOrderEdit();
 
   const { results, loading: searching, error: searchError } = useProductSearch(
@@ -121,18 +123,42 @@ function ReplacementPicker({ selectedLine, orderId, onBack, onReplaced }) {
 
     setSubmitting(true);
     setError(null);
+    setQuantityMsg(null);
 
     try {
+      let qtyToSwap = selectedLine.quantity;
+      let qtyWarn = null;
+
+      const inventory = await checkVariantQuantity(selectedVariantId);
+      if (inventory) {
+        if (!inventory.availableForSale) {
+          throw new Error('Selected replacement item is currently out of stock.');
+        }
+        if (inventory.quantityAvailable !== null) {
+          const avail = inventory.quantityAvailable;
+          if (avail <= 0) {
+            throw new Error('Selected replacement item is currently out of stock.');
+          }
+          if (selectedLine.quantity > avail) {
+            qtyToSwap = avail;
+            qtyWarn = `Only ${avail} quantity available in stock. Swapped with ${avail} quantity instead of ${selectedLine.quantity}.`;
+          }
+        }
+      }
+
       const res = await changeLineItemVariant({
         orderId,
         oldLineItemId: selectedLine.id,
         newVariantId: selectedVariantId,
-        quantity: selectedLine.quantity,
+        quantity: qtyToSwap,
       });
       setResult(res);
+      if (qtyWarn) {
+        setQuantityMsg(qtyWarn);
+      }
       notifyUpdateSuccess(res?.order?.statusPageUrl);
       if (!res.balanceDue?.amount || res.balanceDue.amount <= 0) {
-        shopify.toast?.show?.('Product replaced successfully!');
+        shopify.toast?.show?.(qtyWarn || 'Product replaced successfully!');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not replace product.');
@@ -145,6 +171,7 @@ function ReplacementPicker({ selectedLine, orderId, onBack, onReplaced }) {
     const balanceDue = result.balanceDue;
     return (
       <s-stack direction="block" gap="base">
+        {quantityMsg ? <s-banner tone="info">{quantityMsg}</s-banner> : null}
         {balanceDue?.amount > 0 ? (
           <BalanceDueRedirect
             balanceDue={balanceDue}
@@ -357,9 +384,25 @@ function ReplacementPicker({ selectedLine, orderId, onBack, onReplaced }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function ReplaceOrderLineItems() {
-  const lines = shopify.lines.value;
-  const order = shopify.order.value;
+  const shopifyOrder = shopify.order.value;
+  const { lineItems: lines, order, loading, error, refetch } = useOrderSearch(shopifyOrder?.id);
+  const displayOrder = order || shopifyOrder;
   const [selectedLine, setSelectedLine] = useState(null);
+
+  if (loading && (!lines || lines.length === 0)) {
+    return (
+      <s-box padding="base" background="subdued" borderRadius="base">
+        <s-stack direction="inline" alignItems="center" gap="small-200" justifyContent="center">
+          <s-spinner size="small" />
+          <s-text color="subdued">Loading items for exchange...</s-text>
+        </s-stack>
+      </s-box>
+    );
+  }
+
+  if (error) {
+    return <s-banner tone="critical">{error}</s-banner>;
+  }
 
   if (!lines || lines.length === 0) {
     return (
@@ -374,9 +417,12 @@ export function ReplaceOrderLineItems() {
       {selectedLine ? (
         <ReplacementPicker
           selectedLine={selectedLine}
-          orderId={order.id}
+          orderId={displayOrder?.id || shopifyOrder?.id}
           onBack={() => setSelectedLine(null)}
-          onReplaced={() => setSelectedLine(null)}
+          onReplaced={() => {
+            setSelectedLine(null);
+            refetch();
+          }}
         />
       ) : (
         <LineItemSelector lines={lines} onSelect={setSelectedLine} />

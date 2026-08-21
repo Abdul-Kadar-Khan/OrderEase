@@ -45,6 +45,74 @@ export async function action({ request }: ActionFunctionArgs) {
   const calculatedLineItemId = lineItemId.replace("LineItem", "CalculatedLineItem");
 
   try {
+    let actualQuantity = Number(quantity);
+    let quantityMessage: string | null = null;
+
+    if (actualQuantity > 0) {
+      try {
+        const lineItemRes = await admin.graphql(
+          `#graphql
+          query GetLineItemVariant($id: ID!) {
+            order(id: $id) {
+              lineItems(first: 100) {
+                nodes {
+                  id
+                  currentQuantity
+                  quantity
+                  variant {
+                    id
+                    inventoryQuantity
+                  }
+                }
+              }
+            }
+          }`,
+          { variables: { id: orderId } },
+        );
+        const lineItemJson = await lineItemRes.json();
+        const rawLineItemId = lineItemId.replace("CalculatedLineItem", "LineItem");
+        const node = lineItemJson.data?.order?.lineItems?.nodes?.find(
+          (n: { id: string }) => n.id === rawLineItemId || n.id === lineItemId,
+        );
+        const currentQty = node?.currentQuantity ?? node?.quantity ?? 0;
+        const invQty = node?.variant?.inventoryQuantity;
+
+        if (typeof invQty === "number") {
+          const maxAllowed = currentQty + invQty;
+          if (actualQuantity > maxAllowed) {
+            if (invQty <= 0) {
+              return cors(
+                Response.json(
+                  {
+                    userErrors: [
+                      {
+                        message: `This product is not available in the required quantity of ${actualQuantity}. No additional stock is available in store (you already have all ${currentQty} units in your order).`,
+                      },
+                    ],
+                  },
+                  { status: 422 },
+                ),
+              );
+            }
+            return cors(
+              Response.json(
+                {
+                  userErrors: [
+                    {
+                      message: `This product is not available in the required quantity of ${actualQuantity}. Only ${invQty} additional units are available in stock. The quantity has been adjusted to ${maxAllowed}. Click 'Save quantity' again to confirm.`,
+                    },
+                  ],
+                },
+                { status: 422 },
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        console.warn("Server inventory check skipped:", e);
+      }
+    }
+
     // Step 1: begin the edit session
     const beginResponse = await admin.graphql(
       `#graphql
@@ -64,16 +132,16 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     const calculatedOrderId = beginJson.data.orderEditBegin.calculatedOrder.id;
 
-    // Step 2: set the quantity
+    // Step 2: set the quantity (restock removed quantity back to inventory)
     const updateResponse = await admin.graphql(
       `#graphql
-      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!) {
-        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity) {
+      mutation OrderEditSetQuantity($id: ID!, $lineItemId: ID!, $quantity: Int!, $restock: Boolean) {
+        orderEditSetQuantity(id: $id, lineItemId: $lineItemId, quantity: $quantity, restock: $restock) {
           calculatedOrder { id }
           userErrors { field message }
         }
       }`,
-      { variables: { id: calculatedOrderId, lineItemId: calculatedLineItemId, quantity: Number(quantity) } },
+      { variables: { id: calculatedOrderId, lineItemId: calculatedLineItemId, quantity: actualQuantity, restock: true } },
     );
     const updateJson = await updateResponse.json();
     const updateErrors = updateJson.data?.orderEditSetQuantity?.userErrors ?? [];
@@ -121,7 +189,7 @@ export async function action({ request }: ActionFunctionArgs) {
       source,
     });
 
-    return cors(Response.json({ order, balanceDue, userErrors: [] }));
+    return cors(Response.json({ order, balanceDue, quantityMessage, userErrors: [] }));
   } catch (err: unknown) {
     console.error("[order-edit] Unexpected error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";

@@ -3,6 +3,7 @@ import { formatMoney } from '../../utils/formatMoney';
 import { changeLineItemVariant } from '../../utils/api';
 import { BalanceDueRedirect } from '../BalanceDueRedirect/BalanceDueRedirect.jsx';
 import { useOrderEdit } from '../../context/OrderEditContext.jsx';
+import useOrderSearch from '../../hooks/useorderSearch';
 
 function truncate(text, maxLength = 38) {
   if (!text) return '';
@@ -47,9 +48,25 @@ function variantLabel(variant) {
 }
 
 export function ChangeProductOptions() {
-  const lines = shopify.lines.value;
-  const order = shopify.order.value;
+  const shopifyOrder = shopify.order.value;
+  const { lineItems: lines, order, loading, error, refetch } = useOrderSearch(shopifyOrder?.id);
+  const displayOrder = order || shopifyOrder;
   const [selectedLine, setSelectedLine] = useState(null);
+
+  if (loading && (!lines || lines.length === 0)) {
+    return (
+      <s-box padding="base" background="subdued" borderRadius="base">
+        <s-stack direction="inline" alignItems="center" gap="small-200" justifyContent="center">
+          <s-spinner size="small" />
+          <s-text color="subdued">Loading items...</s-text>
+        </s-stack>
+      </s-box>
+    );
+  }
+
+  if (error) {
+    return <s-banner tone="critical">{error}</s-banner>;
+  }
 
   if (!lines || lines.length === 0) {
     return (
@@ -64,9 +81,12 @@ export function ChangeProductOptions() {
       {selectedLine ? (
         <ChangeVariantPicker
           line={selectedLine}
-          orderId={order.id}
+          orderId={displayOrder?.id || shopifyOrder?.id}
           onBack={() => setSelectedLine(null)}
-          onChanged={() => setSelectedLine(null)}
+          onChanged={() => {
+            setSelectedLine(null);
+            refetch();
+          }}
         />
       ) : (
         <s-stack direction="block" gap="small-300">

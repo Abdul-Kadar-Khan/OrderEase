@@ -61,8 +61,11 @@ export function UpsellSlider() {
     }
   };
 
-  const handleAdded = (result) => {
+  const [quantityMessage, setQuantityMessage] = useState(null);
+
+  const handleAdded = (result, qtyMsg) => {
     setLastResult(result);
+    setQuantityMessage(qtyMsg || null);
     setSelectedProduct(null);
     notifyUpdateSuccess(result?.order?.statusPageUrl);
   };
@@ -99,14 +102,19 @@ export function UpsellSlider() {
 
         {lastResult && (
           <s-box padding="base" inlineSize="100%">
-            {balanceDue?.amount > 0 ? (
-              <BalanceDueRedirect
-                balanceDue={balanceDue}
-                statusPageUrl={lastResult?.order?.statusPageUrl}
-              />
-            ) : (
-              <s-banner tone="success">Recommended item successfully added to your package!</s-banner>
-            )}
+            <s-stack direction="block" gap="small-200">
+              {quantityMessage ? (
+                <s-banner tone="warning">{quantityMessage}</s-banner>
+              ) : null}
+              {balanceDue?.amount > 0 ? (
+                <BalanceDueRedirect
+                  balanceDue={balanceDue}
+                  statusPageUrl={lastResult?.order?.statusPageUrl}
+                />
+              ) : (
+                <s-banner tone="success">Recommended item successfully added to your package!</s-banner>
+              )}
+            </s-stack>
           </s-box>
         )}
 

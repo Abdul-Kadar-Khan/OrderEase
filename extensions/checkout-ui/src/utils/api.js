@@ -1,5 +1,5 @@
 // TODO: replace with your app's deployed URL (must match SHOPIFY_APP_URL / application_url).
-const APP_URL = 'https://orderease-production.up.railway.app';
+const APP_URL = 'https://spy-index-son-pond.trycloudflare.com';
 
 /**
  * Normalizes any order ID string to standard Shopify Admin GID format:
@@ -389,4 +389,38 @@ export async function getServiceSettings() {
   }
 
   return response.json();
+}
+
+/**
+ * Checks the available quantity for a product variant using the Storefront API.
+ * @param {string} variantId - GID of the product variant
+ * @returns {Promise<{ availableForSale: boolean, quantityAvailable: number|null }|null>}
+ */
+export async function checkVariantQuantity(variantId) {
+  if (!variantId) return null;
+  const QUERY = `#graphql
+    query GetVariantQuantity($id: ID!) {
+      node(id: $id) {
+        ... on ProductVariant {
+          id
+          title
+          availableForSale
+        }
+      }
+    }
+  `;
+  try {
+    if (typeof shopify === 'undefined' || !shopify.query) return null;
+    const { data, errors } = await shopify.query(QUERY, {
+      variables: { id: variantId },
+    });
+    if (errors?.length || !data?.node) return null;
+    return {
+      availableForSale: Boolean(data.node.availableForSale),
+      quantityAvailable: null,
+    };
+  } catch (err) {
+    console.warn('Inventory check failed:', err);
+    return null;
+  }
 }

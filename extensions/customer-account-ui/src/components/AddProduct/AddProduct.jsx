@@ -14,6 +14,7 @@ export function AddProduct() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [lastResult, setLastResult] = useState(null);
+  const [quantityMessage, setQuantityMessage] = useState(null);
   const { notifyUpdateSuccess } = useOrderEdit();
 
   const { results, loading, error } = useProductSearch(
@@ -24,6 +25,7 @@ export function AddProduct() {
 
   function handleSelectProduct(product) {
     setLastResult(null);
+    setQuantityMessage(null);
     setSelectedProduct(product);
   }
 
@@ -31,8 +33,9 @@ export function AddProduct() {
     setSelectedProduct(null);
   }
 
-  function handleAdded(result) {
+  function handleAdded(result, qtyMsg) {
     setLastResult(result);
+    setQuantityMessage(qtyMsg || null);
     setSelectedProduct(null);
     setSearchTerm('');
     notifyUpdateSuccess(result?.order?.statusPageUrl);
@@ -44,6 +47,9 @@ export function AddProduct() {
     <s-stack direction="block" gap="base">
       {lastResult && (
         <s-stack direction="block" gap="small-200">
+          {quantityMessage ? (
+            <s-banner tone="warning">{quantityMessage}</s-banner>
+          ) : null}
           {balanceDue?.amount > 0 ? (
             <BalanceDueRedirect
               balanceDue={balanceDue}

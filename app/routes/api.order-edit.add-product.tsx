@@ -67,6 +67,42 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
+    // Step 0: Check available product variant inventory
+    let actualQuantity = Number(quantity);
+    let quantityMessage: string | null = null;
+
+    try {
+      const variantRes = await admin.graphql(
+        `#graphql
+        query GetVariantStock($id: ID!) {
+          productVariant(id: $id) {
+            id
+            inventoryQuantity
+          }
+        }`,
+        { variables: { id: variantId } },
+      );
+      const variantJson = await variantRes.json();
+      const invQty = variantJson.data?.productVariant?.inventoryQuantity;
+
+      if (typeof invQty === "number") {
+        if (invQty <= 0) {
+          return cors(
+            Response.json(
+              { userErrors: [{ message: "Product is currently out of stock." }] },
+              { status: 422 },
+            ),
+          );
+        }
+        if (actualQuantity > invQty) {
+          quantityMessage = `Only ${invQty} quantity available in stock. Added ${invQty} quantity to your order instead of ${actualQuantity}.`;
+          actualQuantity = invQty;
+        }
+      }
+    } catch (e) {
+      console.warn("Server inventory check skipped:", e);
+    }
+
     // Step 1: begin the edit session
     const beginResponse = await admin.graphql(
       `#graphql
@@ -97,7 +133,7 @@ export async function action({ request }: ActionFunctionArgs) {
           userErrors { field message }
         }
       }`,
-      { variables: { id: calculatedOrderId, variantId, quantity } },
+      { variables: { id: calculatedOrderId, variantId, quantity: actualQuantity } },
     );
     const addJson = await addResponse.json();
     const addErrors = addJson.data?.orderEditAddVariant?.userErrors ?? [];
@@ -146,7 +182,7 @@ export async function action({ request }: ActionFunctionArgs) {
       source,
     });
 
-    return cors(Response.json({ order, balanceDue, userErrors: [] }));
+    return cors(Response.json({ order, balanceDue, quantityMessage, userErrors: [] }));
   } catch (err: unknown) {
     console.error("[order-edit] Unexpected error:", err);
     const message =
