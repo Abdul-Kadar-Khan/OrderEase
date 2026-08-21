@@ -1,5 +1,5 @@
 // TODO: replace with your app's deployed URL (must match SHOPIFY_APP_URL / application_url).
-const APP_URL = 'https://spy-index-son-pond.trycloudflare.com';
+const APP_URL = 'https://orderease-production.up.railway.app';
 
 /** 
  * Adds a product variant to the current order.

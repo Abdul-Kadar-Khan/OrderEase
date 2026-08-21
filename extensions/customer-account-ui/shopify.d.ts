@@ -91,6 +91,12 @@ declare module './src/utils/api.js' {
 }
 
 //@ts-ignore
+declare module './src/utils/formatMoney.js' {
+  const shopify: import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+
+//@ts-ignore
 declare module './src/context/OrderEditContext.jsx' {
   const shopify: import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;
   const globalThis: { shopify: typeof shopify };
@@ -98,12 +104,6 @@ declare module './src/context/OrderEditContext.jsx' {
 
 //@ts-ignore
 declare module './src/hooks/useorderSearch.js' {
-  const shopify: import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;
-  const globalThis: { shopify: typeof shopify };
-}
-
-//@ts-ignore
-declare module './src/utils/formatMoney.js' {
   const shopify: import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;
   const globalThis: { shopify: typeof shopify };
 }
