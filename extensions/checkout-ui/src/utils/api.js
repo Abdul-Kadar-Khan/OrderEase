@@ -374,12 +374,16 @@ export async function updateOrderNote({ orderId, note }) {
  * Fetch the merchant's service settings (which features are enabled/disabled).
  * Used by the Checkout UI / Customer Account UI to conditionally render features.
  *
- * @returns {Promise<{ settings: Record<string, boolean>, timeLimit: Object|null }>}
+ * @param {string} [orderId]
+ * @returns {Promise<{ settings: Record<string, boolean>, timeLimit: Object|null, editLimit: Object|null }>}
  */
-export async function getServiceSettings() {
+export async function getServiceSettings(orderId) {
   const token = await shopify.sessionToken.get();
+  const url = orderId
+    ? `${APP_URL}/api/service-settings?orderId=${encodeURIComponent(orderId)}`
+    : `${APP_URL}/api/service-settings`;
 
-  const response = await fetch(`${APP_URL}/api/service-settings`, {
+  const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
 

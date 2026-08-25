@@ -169,6 +169,7 @@ export async function action({ request }: ActionFunctionArgs) {
               nodes {
                 id
                 quantity
+                editableQuantity
                 variant { id product { id title } }
                 originalUnitPriceSet {
                   shopMoney { amount currencyCode }
@@ -210,7 +211,12 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     const calculatedOrder = beginJson.data.orderEditBegin.calculatedOrder;
     const calculatedOrderId = calculatedOrder.id;
-    const allLineItems = calculatedOrder.lineItems?.nodes ?? [];
+    const allLineItems = (calculatedOrder.lineItems?.nodes ?? []).filter(
+      (item: { quantity?: number; editableQuantity?: number }) => {
+        const qty = item.editableQuantity ?? item.quantity ?? 0;
+        return qty > 0;
+      },
+    );
 
     if (allLineItems.length === 0) {
       return cors(Response.json(
@@ -829,9 +835,14 @@ export async function action({ request }: ActionFunctionArgs) {
           continue;
         }
 
+        const itemQty = (item as { editableQuantity?: number; quantity?: number }).editableQuantity
+          ?? (item as { quantity?: number }).quantity
+          ?? 1;
+        const perUnitAdditionalAmount = Math.min(additionalDiscountAmount / itemQty, originalUnit);
+
         itemDiscountInput = {
           fixedValue: {
-            amount: additionalDiscountAmount.toFixed(2),
+            amount: perUnitAdditionalAmount.toFixed(2),
             currencyCode: freshCurrencyCode || "USD",
           },
           description: buildTaggedDescription([freshEntry], formatEntryForDisplay(freshEntry, freshCurrencyCode)),

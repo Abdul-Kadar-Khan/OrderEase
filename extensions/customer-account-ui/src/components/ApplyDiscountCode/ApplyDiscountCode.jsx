@@ -87,13 +87,7 @@ export function ApplyDiscountCode() {
       {/* ── Success: at least one product was discounted ── */}
       {result?.applied && (
         <s-banner tone="success">
-          Discount "{result.discountLabel}" applied to {result.appliedCount}{' '}
-          product{result.appliedCount === 1 ? '' : 's'}
-          {hasApplied ? ` (${result.appliedProducts.join(', ')})` : ''}.
-          {' '}Your order totals have been adjusted.
-          {result.replacedCount > 0
-            ? ` Note: This promotion automatically upgraded and replaced a lower discount on ${result.replacedCount === 1 ? 'an item' : `${result.replacedCount} items`}.`
-            : ''}
+          Discount "{result.discountLabel}" applied to {hasApplied ? result.appliedProducts.join(', ') : `${result.appliedCount} product${result.appliedCount === 1 ? '' : 's'}`}.
         </s-banner>
       )}
 
@@ -101,8 +95,8 @@ export function ApplyDiscountCode() {
       {result?.applied && hasSkipped && (
         <s-banner tone="warning">
           {result.warnings?.length > 0
-            ? result.warnings.join(' ')
-            : `Some items in your shipment were skipped because they already benefit from a higher discount.`}
+            ? Array.from(new Set(result.warnings)).join(' ')
+            : `Skipped items: ${result.skippedProducts?.join(', ') || 'items already have a higher discount'}.`}
         </s-banner>
       )}
 
@@ -110,8 +104,8 @@ export function ApplyDiscountCode() {
       {result && !result.applied && (
         <s-banner tone="warning">
           {result.warnings?.length > 0
-            ? result.warnings.join(' ')
-            : 'The entered discount code could not be applied to the items in this order.'}
+            ? Array.from(new Set(result.warnings)).join(' ')
+            : 'The entered discount code could not be applied to any items in this order.'}
         </s-banner>
       )}
 

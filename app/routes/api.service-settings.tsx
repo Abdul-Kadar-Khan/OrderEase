@@ -1,22 +1,26 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { checkOrderEditLimit } from "../utils/editLimitHelper.server";
 
 /**
- * GET /api/service-settings
+ * GET /api/service-settings?orderId=...
  *
  * Called by the Customer Account UI extension to find out which features
  * the merchant has enabled.  Authentication is done via the customer-account
  * session token (same pattern as the other api.order-edit.* routes).
  *
  * Returns:
- *   { settings: { [serviceId: string]: boolean } }
+ *   { settings: { [serviceId: string]: boolean }, timeLimit: {...}, editLimit: {...} }
  */
 export async function loader({ request }: LoaderFunctionArgs) {
   const { sessionToken, cors } = await authenticate.public.customerAccount(request);
 
   // Derive the store domain from the session token destination URL
   const storeDomain = sessionToken.dest.replace(/^https?:\/\//, "");
+
+  const url = new URL(request.url);
+  const orderId = url.searchParams.get("orderId");
 
   // Use the store domain as the "shop" key (same value stored by the app's OAuth session)
   const rows = await db.serviceSettings.findMany({
@@ -28,6 +32,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const timeLimitRecord = await db.orderEditTimeLimit.findUnique({
     where: { shop: storeDomain },
   });
+
+  const editLimitStatus = await checkOrderEditLimit({ shop: storeDomain, orderId });
 
   const settings: Record<string, boolean> = {};
   for (const row of rows) {
@@ -44,6 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
             customUnit: timeLimitRecord.customUnit,
           }
         : { preset: "1h", customValue: 1, customUnit: "hours" },
+      editLimit: editLimitStatus,
     }),
   );
 }

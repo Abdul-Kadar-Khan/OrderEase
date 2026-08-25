@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate, unauthenticated } from "../shopify.server";
 import { trackOrderEdit } from "../utils/analyticsHelper.server";
+import { checkOrderEditLimit } from "../utils/editLimitHelper.server";
 
 
 /**
@@ -75,6 +76,7 @@ type AllocationNode = {
 type LineItemNode = {
   id: string;
   quantity: number;
+  editableQuantity?: number;
   title?: string | null;
   variant?: {
     id: string;
@@ -428,6 +430,20 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
+  const { isLimitReached, maxEdits } = await checkOrderEditLimit({ shop: storeDomain, orderId });
+  if (isLimitReached) {
+    return cors(
+      Response.json(
+        {
+          userErrors: [
+            { message: `You have reached the maximum allowed edits (${maxEdits} edits) for this order.` },
+          ],
+        },
+        { status: 422 },
+      ),
+    );
+  }
+
   try {
     const resolved = await resolveDiscountCode(admin, discountCode);
     if (!resolved.ok) {
@@ -445,6 +461,7 @@ export async function action({ request }: ActionFunctionArgs) {
               nodes {
                 id
                 quantity
+                editableQuantity
                 title
                 variant {
                   id
@@ -481,11 +498,19 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const calculatedOrder = beginJson.data.orderEditBegin.calculatedOrder;
     const calculatedOrderId: string = calculatedOrder.id;
-    const allLineItems: LineItemNode[] = calculatedOrder.lineItems?.nodes ?? [];
+    // console.log("calculatedOrder", calculatedOrder.lineItems);
+    const allLineItems: LineItemNode[] = (calculatedOrder.lineItems?.nodes ?? []).filter(
+      (item: LineItemNode) => {
+        const activeQty = item.editableQuantity ?? item.quantity;
+        return activeQty > 0;
+      },
+    );
+
+    // console.log("allLineItems", allLineItems.length);
 
     if (allLineItems.length === 0) {
       return cors(
-        Response.json({ userErrors: [{ message: "This order has no line items to discount." }] }, { status: 422 }),
+        Response.json({ userErrors: [{ message: "This order has no active line items to discount." }] }, { status: 422 }),
       );
     }
 
@@ -511,8 +536,9 @@ export async function action({ request }: ActionFunctionArgs) {
     for (const item of targetLineItems) {
       const displayName = lineItemDisplayName(item);
       const state = readLineItemDiscountState(item);
+      const activeQty = item.editableQuantity ?? item.quantity;
       const originalUnit = parseFloat(item.originalUnitPriceSet?.shopMoney?.amount ?? "0");
-      const originalLineTotal = originalUnit * item.quantity;
+      const originalLineTotal = originalUnit * activeQty;
       const currencyCode = state.currencyCode || item.originalUnitPriceSet?.shopMoney?.currencyCode || "USD";
 
       // Calculate what the new discount would be worth on this line item.
@@ -617,6 +643,13 @@ export async function action({ request }: ActionFunctionArgs) {
         label: resolved.label,
       };
       const combinedAmount = newProductAmount + state.tag.orderAmount;
+      const perUnitAmount = Math.min(combinedAmount / activeQty, originalUnit);
+
+      if (perUnitAmount <= 0) {
+        warnings.push(`Could not apply the discount to "${displayName}": discount amount must be greater than 0.`);
+        skippedProducts.push(displayName);
+        continue;
+      }
 
       const applyRes = await admin.graphql(
         `#graphql
@@ -631,7 +664,7 @@ export async function action({ request }: ActionFunctionArgs) {
             id: calculatedOrderId,
             lineItemId: item.id,
             discount: {
-              fixedValue: { amount: combinedAmount.toFixed(2), currencyCode },
+              fixedValue: { amount: perUnitAmount.toFixed(2), currencyCode },
               description: encodeTag(newTag),
             },
           },
@@ -657,6 +690,10 @@ export async function action({ request }: ActionFunctionArgs) {
       if (wasReplacement) replacedCount += 1;
     }
 
+    const uniqueWarnings = Array.from(new Set(warnings));
+    const uniqueSkippedProducts = Array.from(new Set(skippedProducts));
+    const uniqueAppliedProducts = Array.from(new Set(appliedProducts));
+
     if (appliedCount === 0) {
       // Nothing changed on the order — no need to commit, just report why.
       // Return HTTP 200 (not 422) so the frontend doesn't throw — the loop
@@ -673,9 +710,9 @@ export async function action({ request }: ActionFunctionArgs) {
           applied: false,
           appliedCount: 0,
           appliedProducts: [],
-          skippedProducts,
+          skippedProducts: uniqueSkippedProducts,
           discountLabel: resolved.label,
-          warnings: warnings.length ? warnings : ["No eligible products found for this discount code."],
+          warnings: uniqueWarnings.length ? uniqueWarnings : ["No eligible products found for this discount code."],
           userErrors: [],
         }),
       );
@@ -721,11 +758,11 @@ export async function action({ request }: ActionFunctionArgs) {
         applied: true,
         order: commitJson.data.orderEditCommit.order,
         appliedCount,
-        appliedProducts,
+        appliedProducts: uniqueAppliedProducts,
         replacedCount,
-        skippedProducts,
+        skippedProducts: uniqueSkippedProducts,
         discountLabel: resolved.label,
-        warnings,
+        warnings: uniqueWarnings,
         userErrors: [],
       }),
     );
