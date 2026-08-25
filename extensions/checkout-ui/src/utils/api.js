@@ -1,5 +1,5 @@
 // TODO: replace with your app's deployed URL (must match SHOPIFY_APP_URL / application_url).
-const APP_URL = 'https://albuquerque-witnesses-rainbow-often.trycloudflare.com';
+const APP_URL = 'https://orderease-production.up.railway.app';
 
 /**
  * Normalizes any order ID string to standard Shopify Admin GID format:

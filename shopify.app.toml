@@ -52,7 +52,7 @@ redirect_urls = [ "https://orderease-production.up.railway.app/api/auth",
                 ]
 
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false
 
 [app_proxy]
 url = "https://orderease-production.up.railway.app"
