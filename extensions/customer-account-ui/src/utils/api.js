@@ -1,5 +1,5 @@
 // TODO: replace with your app's deployed URL (must match SHOPIFY_APP_URL / application_url).
-const APP_URL = 'https://orderease-production.up.railway.app';
+const APP_URL = 'https://albuquerque-witnesses-rainbow-often.trycloudflare.com';
 
 /** 
  * Adds a product variant to the current order.
@@ -381,21 +381,25 @@ export async function updateOrderNote({ orderId, note }) {
 }
 
 /**
- * Fetch the merchant's service settings (which features are enabled/disabled).
- * Used by the Customer Account UI to conditionally render features.
+ * Fetch the merchant's service settings (which features are enabled/disabled)
+ * and edit limit status for an order.
  *
- * @returns {Promise<{ settings: Record<string, boolean> }>}
+ * @param {string} [orderId] - Optional order ID
+ * @returns {Promise<{ settings: Record<string, boolean>, timeLimit: Object|null, editLimit: Object|null }>}
  */
-export async function getServiceSettings() {
+export async function getServiceSettings(orderId) {
   const token = await shopify.sessionToken.get();
+  const url = orderId
+    ? `${APP_URL}/api/service-settings?orderId=${encodeURIComponent(orderId)}`
+    : `${APP_URL}/api/service-settings`;
 
-  const response = await fetch(`${APP_URL}/api/service-settings`, {
+  const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!response.ok) {
     // If the call fails, default to showing all features
-    return { settings: {} };
+    return { settings: {}, editLimit: { maxEdits: null, currentEditCount: 0, isLimitReached: false } };
   }
 
   return response.json();

@@ -2,17 +2,11 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate, unauthenticated } from "../shopify.server";
 import { addOrderTags } from "../utils/orderTagsHelper.server";
 import { trackOrderEdit } from "../utils/analyticsHelper.server";
+import { checkOrderEditLimit } from "../utils/editLimitHelper.server";
 
 /**
  * Adds a product variant to an existing order, called from the
  * "Add a product to your order" panel in the customer account extension.
- *
- * Flow: orderEditBegin -> orderEditAddVariant -> orderEditCommit.
- * Committing with notifyrue makes Shopify automatically email
- * the customer an invoice with a secure payment link if the edit raises
- * the order total — this is how the "remaining payment" is handled, the
- * same mechanism used for draft order invoices. No custom payment/charge
- * logic is needed here.
  */
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -33,9 +27,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  // CORS preflight — the extension runs on a different origin, so the
-  // browser sends an OPTIONS request before the real POST.
-
   const { sessionToken, cors } =
     await authenticate.public.customerAccount(request);
 
@@ -62,6 +53,23 @@ export async function action({ request }: ActionFunctionArgs) {
           userErrors: [{ message: "Missing orderId, variantId, or quantity." }],
         },
         { status: 400 },
+      ),
+    );
+  }
+
+  // Check edit limit guard
+  const editLimitCheck = await checkOrderEditLimit({ shop: storeDomain, orderId });
+  if (editLimitCheck.isLimitReached) {
+    return cors(
+      Response.json(
+        {
+          userErrors: [
+            {
+              message: `You have reached the maximum allowed edits (${editLimitCheck.maxEdits} edits) for this order.`,
+            },
+          ],
+        },
+        { status: 422 },
       ),
     );
   }

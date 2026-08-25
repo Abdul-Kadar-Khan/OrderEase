@@ -238,6 +238,7 @@ export default function OrderStatusBlock2() {
   const orderId = getExtensionOrderId();
   const [serviceSettings, setServiceSettings] = useState(null);
   const [timeLimit, setTimeLimit] = useState(null);
+  const [editLimit, setEditLimit] = useState(null);
   const [isExpired, setIsExpired] = useState(null);
   const [remainingTime, setRemainingTime] = useState("--:--:--");
   const [createdAtStr, setCreatedAtStr] = useState(null);
@@ -253,16 +254,18 @@ export default function OrderStatusBlock2() {
 
   // Fetch merchant service settings once on mount
   useEffect(() => {
-    getServiceSettings()
-      .then(({ settings, timeLimit: dbTimeLimit }) => {
+    getServiceSettings(orderId)
+      .then(({ settings, timeLimit: dbTimeLimit, editLimit: dbEditLimit }) => {
         setServiceSettings(settings || {});
         setTimeLimit(dbTimeLimit || null);
+        setEditLimit(dbEditLimit || null);
       })
       .catch(() => { 
         setServiceSettings({});
         setTimeLimit(null);
+        setEditLimit(null);
       });
-  }, []);
+  }, [orderId]);
 
   // Fetch order created timestamp
   useEffect(() => {
@@ -303,6 +306,8 @@ export default function OrderStatusBlock2() {
     return () => clearInterval(interval);
   }, [createdAtStr, timeLimit]);
 
+  const isLimitReached = editLimit?.isLimitReached === true;
+
   // Render loader until calculations and settings are completed
   if (serviceSettings === null || isExpired === null) {
     return (
@@ -322,6 +327,10 @@ export default function OrderStatusBlock2() {
         <s-banner tone="critical" title="Order Editing Window Expired">
           The time window configured by the merchant to edit this order has ended.
         </s-banner>
+      ) : isLimitReached ? (
+        <s-banner tone="warning" title="Order Edit Limit Reached">
+          You have reached the maximum allowed edits ({editLimit.currentEditCount} of {editLimit.maxEdits} edits) for this order.
+        </s-banner>
       ) : (
         <s-box background="subdued" padding="base" paddingInline="large" borderRadius="large" borderWidth="base">
           <s-stack direction="inline" alignItems="center" gap="small-300">
@@ -334,12 +343,28 @@ export default function OrderStatusBlock2() {
 
       {/* ── Standalone Upsell Feature Outside Manage Order ── */}
       {(() => {
-        if (!isExpired && isEnabled('product-upsell')) {
+        if (!isExpired && !isLimitReached && isEnabled('product-upsell')) {
           return <UpsellSlider orderId={orderId} />;
         }
       })()}
 
-      {!isExpired && (
+      {(isExpired || isLimitReached) ? (
+        isEnabled('download-invoice') && (
+          <s-section heading="Order documents">
+            <s-stack direction="block" gap="base" inlineSize="100%">
+              <ModalSection
+                title="Download official invoice"
+                subtitle="Generate an itemized tax receipt and commercial PDF invoice for your records"
+                iconType="order"
+              >
+                <s-stack direction="block" gap="large" inlineSize="100%">
+                  <DownloadInvoice orderId={orderId} />
+                </s-stack>
+              </ModalSection>
+            </s-stack>
+          </s-section>
+        )
+      ) : (
         <s-section heading="Manage order">
           {/* ── Quick Navigation Section ── */}
           <QuickNavigation />

@@ -47,6 +47,7 @@ model OrderEditTimeLimit {
   timeLimit   String   @default("1h") // preset e.g. "30m", "1h", "2h", "1d", "2d", "custom"
   customValue Int?                // custom value number
   customUnit  String?             // custom unit e.g. "minutes", "hours", "days"
+  maxEdits    Int?     @default(3) // maximum allowed order edits limit (null or 0 = unlimited)
   updatedAt   DateTime @updatedAt
 }
 

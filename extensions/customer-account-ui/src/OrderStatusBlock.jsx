@@ -275,10 +275,10 @@ function Extension() {
   const [targetStatusUrl, setTargetStatusUrl] = useState(null);
   const [topPageCountdown, setTopPageCountdown] = useState(null);
   // serviceSettings: map of serviceId → enabled (true/false)
-  // Defaults to null while loading — features are shown by default.
   const [serviceSettings, setServiceSettings] = useState(null);
   const [isExpired, setIsExpired] = useState(null);
   const [timeLimit, setTimeLimit] = useState(null);
+  const [editLimit, setEditLimit] = useState(null);
   const [remainingTime, setRemainingTime] = useState("--:--:--");
 
   useEffect((()=>{
@@ -286,7 +286,6 @@ function Extension() {
   }),[isExpired])
 
   // Helper: returns true only when the service is explicitly enabled.
-  // While loading (null), isEnabled is never called because we show the spinner.
   const isEnabled = (serviceId) => serviceSettings !== null && serviceSettings[serviceId] === true;
 
   // Category-level visibility — only show a category if at least one of its services is enabled
@@ -295,18 +294,21 @@ function Extension() {
   const showPromotionsCategory = isEnabled('apply-discount') || isEnabled('download-invoice');
   const showCancellationCategory = isEnabled('cancel-order');
 
-  // Fetch merchant service settings once on mount
+  // Fetch merchant service settings and edit limit
   useEffect(() => {
-    getServiceSettings()
-      .then(({ settings, timeLimit: dbTimeLimit }) => {
+    const currentOrderId = order?.id || shopify?.order?.value?.id;
+    getServiceSettings(currentOrderId)
+      .then(({ settings, timeLimit: dbTimeLimit, editLimit: dbEditLimit }) => {
         setServiceSettings(settings || {});
         setTimeLimit(dbTimeLimit || null);
+        setEditLimit(dbEditLimit || null);
       })
       .catch(() => { 
         setServiceSettings({});
         setTimeLimit(null);
+        setEditLimit(null);
       });
-  }, []);
+  }, [order?.id]);
 
   useEffect(() => {
     const createdAtStr = order?.createdAt || shopify?.order?.value?.createdAt;
@@ -365,7 +367,6 @@ function Extension() {
   const performReload = (urlParam) => {
     const destinationUrl = urlParam || targetStatusUrl || (typeof window !== 'undefined' && window.location ? window.location.href : null);
 
-    // Strategy 1: shopify.navigation.navigate
     if (typeof shopify !== 'undefined' && shopify.navigation && typeof shopify.navigation.navigate === 'function' && destinationUrl) {
       try {
         shopify.navigation.navigate(destinationUrl);
@@ -375,7 +376,6 @@ function Extension() {
       }
     }
 
-    // Strategy 2: window.location navigation
     if (typeof window !== 'undefined' && window.location && destinationUrl) {
       try {
         window.location.href = destinationUrl;
@@ -401,7 +401,6 @@ function Extension() {
       }
     }
 
-    // Strategy 3: Parent / Top window location
     if (typeof window !== 'undefined' && destinationUrl) {
       try {
         if (window.top && window.top.location) {
@@ -438,7 +437,8 @@ function Extension() {
       }
     }, 1000);
   };
-  
+
+  const isLimitReached = editLimit?.isLimitReached === true;
 
   // Show a loader until service settings have been fetched and expiry calculations are completed
   if (serviceSettings === null || isExpired === null) {
@@ -475,10 +475,13 @@ function Extension() {
       ) : (
       <s-stack direction="block" gap="large" inlineSize="100%">
 
-
         {isExpired ? (
           <s-banner tone="critical" title="Order Editing Window Expired">
             The time window configured by the merchant to edit this order has ended.
+          </s-banner>
+        ) : isLimitReached ? (
+          <s-banner tone="warning" title="Order Edit Limit Reached">
+            You have reached the maximum allowed edits ({editLimit.currentEditCount} of {editLimit.maxEdits} edits) for this order.
           </s-banner>
         ) : (
           <s-box background="subdued" padding="base" paddingInline="large" borderRadius="large" borderWidth="base">
@@ -492,12 +495,28 @@ function Extension() {
 
         {/* ── Standalone Upsell Feature Outside Manage Order ── */}
         {(() => {
-          if (!isExpired && isEnabled('product-upsell')) {
+          if (!isExpired && !isLimitReached && isEnabled('product-upsell')) {
             return <UpsellSlider />;
           }
         })()}
 
-        {!isExpired && (
+        {(isExpired || isLimitReached) ? (
+          isEnabled('download-invoice') && (
+            <s-section heading="Order documents">
+              <s-stack direction="block" gap="base" inlineSize="100%">
+                <ModalSection
+                  title="Download official invoice"
+                  subtitle="Generate an itemized tax receipt and commercial PDF invoice for your records"
+                  iconType="order"
+                >
+                  <s-stack direction="block" gap="large" inlineSize="100%">
+                    <DownloadInvoice />
+                  </s-stack>
+                </ModalSection>
+              </s-stack>
+            </s-section>
+          )
+        ) : (
         <s-section heading="Manage orders">
           {/* ── Welcome & Status Banner ── */}
 
