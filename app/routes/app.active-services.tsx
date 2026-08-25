@@ -163,13 +163,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       customValue: timeLimitRecord.customValue ?? 1,
       customUnit: timeLimitRecord.customUnit ?? "hours",
     },
-    maxEditsSettings: {
-      maxEdits: timeLimitRecord.maxEdits ?? 3,
-    },
   };
 };
 
-// ─── Action — toggle service OR update time limit / max edits for this shop ─
+// ─── Action — toggle service OR update time limit for this shop ───────────
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -206,28 +203,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { ok: true, type: "timeLimit", result: timeLimitRecord };
   }
 
-  if (intent === "saveMaxEdits") {
-    const maxEditsStr = formData.get("maxEdits") as string;
-    const maxEdits = maxEditsStr !== "" && maxEditsStr !== null ? parseInt(maxEditsStr, 10) : 3;
-
-    console.log(
-      `[ActiveServices Action] Saving max edits setting: shop=${shop}, maxEdits=${maxEdits}`,
-    );
-
-    const timeLimitRecord = await db.orderEditTimeLimit.upsert({
-      where: { shop },
-      create: {
-        shop,
-        maxEdits,
-      },
-      update: {
-        maxEdits,
-      },
-    });
-
-    return { ok: true, type: "maxEdits", result: timeLimitRecord };
-  }
-
   const serviceId = formData.get("serviceId") as string;
   const enabledStr = formData.get("enabled") as string;
   const enabled = enabledStr === "true";
@@ -257,7 +232,7 @@ export const headers: HeadersFunction = (headersArgs) => {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function ActiveServicesPage(): JSX.Element {
-  const { services, timeLimitSettings, maxEditsSettings } = useLoaderData<typeof loader>();
+  const { services, timeLimitSettings } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Active Services">
@@ -271,9 +246,6 @@ export default function ActiveServicesPage(): JSX.Element {
 
       {/* ── Time Limit Configuration Box ── */}
       <TimeLimitSection initialSettings={timeLimitSettings} />
-
-      {/* ── Max Edits Limit Configuration Box ── */}
-      <MaxEditsSection initialMaxEdits={maxEditsSettings.maxEdits} />
 
       <s-section heading="Services Overview">
         <s-stack direction="block" gap="base">
@@ -475,173 +447,6 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
           {isSaved && (
             <s-badge tone="success">
               Time limit settings saved successfully!
-            </s-badge>
-          )}
-        </s-stack>
-      </s-box>
-    </s-section>
-  );
-}
-
-// ─── MaxEditsSection Component ────────────────────────────────────────────
-
-const MAX_EDIT_PRESETS = [
-  { value: "0", label: "Unlimited" },
-  { value: "1", label: "1 Edit" },
-  { value: "2", label: "2 Edits" },
-  { value: "3", label: "3 Edits" },
-  { value: "5", label: "5 Edits" },
-  { value: "10", label: "10 Edits" },
-  { value: "custom", label: "Custom Limit" },
-] as const;
-
-interface MaxEditsSectionProps {
-  initialMaxEdits: number;
-}
-
-function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element {
-  const fetcher = useFetcher();
-  const [selectedPreset, setSelectedPreset] = useEffectState(
-    MAX_EDIT_PRESETS.some((p) => p.value === String(initialMaxEdits))
-      ? String(initialMaxEdits)
-      : "custom",
-  );
-  const [customEditsVal, setCustomEditsVal] = useEffectState(
-    initialMaxEdits > 0 ? initialMaxEdits : 3,
-  );
-  const [isSaved, setIsSaved] = useEffectState(false);
-
-  useEffect(() => {
-    const isPreset = MAX_EDIT_PRESETS.some((p) => p.value === String(initialMaxEdits));
-    setSelectedPreset(isPreset ? String(initialMaxEdits) : "custom");
-    setCustomEditsVal(initialMaxEdits > 0 ? initialMaxEdits : 3);
-  }, [initialMaxEdits]);
-
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "maxEdits") {
-      setIsSaved(true);
-      const timer = setTimeout(() => setIsSaved(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [fetcher.state, fetcher.data]);
-
-  const handleSave = (preset: string, val?: number) => {
-    let finalVal = 3;
-    if (preset === "custom") {
-      finalVal = val ?? customEditsVal;
-    } else {
-      finalVal = parseInt(preset, 10);
-    }
-
-    fetcher.submit(
-      {
-        intent: "saveMaxEdits",
-        maxEdits: String(finalVal),
-      },
-      { method: "post" },
-    );
-  };
-
-  return (
-    <s-section heading="Maximum Order Edits Limit">
-      <s-box
-        padding="large"
-        border="base"
-        borderRadius="base"
-        background="subdued"
-      >
-        <s-stack direction="block" gap="large">
-          <s-stack direction="block" gap="small">
-            <s-text type="strong">Maximum Allowed Edits Per Order</s-text>
-            <s-paragraph color="subdued">
-              Set the maximum number of order modifications allowed per order across all features (adding items, changing quantities, applying discounts, shipping address updates, etc.). PDF Invoice downloading is always permitted without restriction.
-            </s-paragraph>
-          </s-stack>
-
-          {/* Presets Grid */}
-          <s-stack direction="block" gap="small">
-            <s-text type="strong">Preset Options</s-text>
-            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(130px, 1fr))" gap="small">
-              {MAX_EDIT_PRESETS.map((preset) => {
-                const isActive = selectedPreset === preset.value;
-                return (
-                  <button
-                    key={preset.value}
-                    type="button"
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: "8px",
-                      border: isActive ? "2px solid #008060" : "1px solid #c9cccf",
-                      backgroundColor: isActive ? "#eaf4f0" : "#ffffff",
-                      color: isActive ? "#004c3f" : "#202223",
-                      fontWeight: isActive ? "600" : "400",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      transition: "all 0.15s ease-in-out",
-                    }}
-                    onClick={() => {
-                      setSelectedPreset(preset.value);
-                      if (preset.value !== "custom") {
-                        handleSave(preset.value);
-                      }
-                    }}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
-            </s-grid>
-          </s-stack>
-
-          {/* Custom Edit Limit Input */}
-          {selectedPreset === "custom" && (
-            <s-box padding="base" border="base" borderRadius="base">
-              <s-stack direction="block" gap="base">
-                <s-text type="strong">Custom Max Edits</s-text>
-                <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
-                  <s-stack direction="block" gap="small">
-                    <s-text color="subdued">Maximum Number of Edits</s-text>
-                    <input
-                      type="number"
-                      min="1"
-                      value={customEditsVal}
-                      onChange={(e) => setCustomEditsVal(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid #c9cccf",
-                        fontSize: "14px",
-                        width: "100%",
-                      }}
-                    />
-                  </s-stack>
-
-                  <s-stack direction="block" gap="small">
-                    <s-text color="subdued" style={{ visibility: "hidden" }}>Save</s-text>
-                    <button
-                      type="button"
-                      onClick={() => handleSave("custom", customEditsVal)}
-                      style={{
-                        padding: "9px 18px",
-                        borderRadius: "6px",
-                        border: "none",
-                        backgroundColor: "#008060",
-                        color: "#ffffff",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Save Custom Limit
-                    </button>
-                  </s-stack>
-                </s-grid>
-              </s-stack>
-            </s-box>
-          )}
-
-          {isSaved && (
-            <s-badge tone="success">
-              Max edits limit saved successfully!
             </s-badge>
           )}
         </s-stack>

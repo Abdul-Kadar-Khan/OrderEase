@@ -58,3 +58,4 @@ automatically_update_urls_on_dev = false
 url = "https://orderease-production.up.railway.app"
 subpath = "order-ease" 
 prefix = "apps"
+ 

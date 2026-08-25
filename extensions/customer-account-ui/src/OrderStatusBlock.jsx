@@ -279,7 +279,6 @@ function Extension() {
   const [serviceSettings, setServiceSettings] = useState(null);
   const [isExpired, setIsExpired] = useState(null);
   const [timeLimit, setTimeLimit] = useState(null);
-  const [editLimit, setEditLimit] = useState(null);
   const [remainingTime, setRemainingTime] = useState("--:--:--");
 
   useEffect((()=>{
@@ -298,19 +297,16 @@ function Extension() {
 
   // Fetch merchant service settings once on mount
   useEffect(() => {
-    const currentOrderId = order?.id || shopify?.order?.value?.id;
-    getServiceSettings(currentOrderId)
-      .then(({ settings, timeLimit: dbTimeLimit, editLimit: dbEditLimit }) => {
+    getServiceSettings()
+      .then(({ settings, timeLimit: dbTimeLimit }) => {
         setServiceSettings(settings || {});
         setTimeLimit(dbTimeLimit || null);
-        setEditLimit(dbEditLimit || { isLimitReached: false, maxEdits: null, editCount: 0 });
       })
       .catch(() => { 
         setServiceSettings({});
         setTimeLimit(null);
-        setEditLimit({ isLimitReached: false, maxEdits: null, editCount: 0 });
       });
-  }, [order?.id]);
+  }, []);
 
   useEffect(() => {
     const createdAtStr = order?.createdAt || shopify?.order?.value?.createdAt;
@@ -444,11 +440,8 @@ function Extension() {
   };
   
 
-  const isLimitReached = Boolean(editLimit?.isLimitReached);
-  const canEdit = !isExpired && !isLimitReached;
-
   // Show a loader until service settings have been fetched and expiry calculations are completed
-  if (serviceSettings === null || isExpired === null || editLimit === null) {
+  if (serviceSettings === null || isExpired === null) {
     return (
       <s-box inlineSize="100%" padding="large">
         <s-stack direction="block" alignItems="center" gap="base" inlineSize="100%">
@@ -483,11 +476,7 @@ function Extension() {
       <s-stack direction="block" gap="large" inlineSize="100%">
 
 
-        {isLimitReached ? (
-          <s-banner tone="critical" title="Maximum Edits Reached">
-            You have reached the maximum allowed edits ({editLimit.maxEdits} {editLimit.maxEdits === 1 ? 'edit' : 'edits'}) for this order. You can still download your order invoice.
-          </s-banner>
-        ) : isExpired ? (
+        {isExpired ? (
           <s-banner tone="critical" title="Order Editing Window Expired">
             The time window configured by the merchant to edit this order has ended.
           </s-banner>
@@ -503,26 +492,12 @@ function Extension() {
 
         {/* ── Standalone Upsell Feature Outside Manage Order ── */}
         {(() => {
-          if (canEdit && isEnabled('product-upsell')) {
+          if (!isExpired && isEnabled('product-upsell')) {
             return <UpsellSlider />;
           }
         })()}
 
-        {!canEdit && isEnabled('download-invoice') && (
-          <s-section heading="Order Invoice">
-            <ModalSection
-              title="Download official invoice"
-              subtitle="Generate an itemized tax receipt and commercial PDF invoice for your records"
-              iconType="order"
-            >
-              <s-stack direction="block" gap="large" inlineSize="100%">
-                <DownloadInvoice />
-              </s-stack>
-            </ModalSection>
-          </s-section>
-        )}
-
-        {canEdit && (
+        {!isExpired && (
         <s-section heading="Manage orders">
           {/* ── Welcome & Status Banner ── */}
 

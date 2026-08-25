@@ -2,7 +2,6 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate, unauthenticated } from "../shopify.server";
 import { addOrderTags } from "../utils/orderTagsHelper.server";
 import { trackOrderEdit } from "../utils/analyticsHelper.server";
-import { checkOrderEditLimit } from "../utils/editLimitHelper.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { sessionToken, cors } = await authenticate.public.customerAccount(request);
@@ -70,20 +69,6 @@ export async function action({ request }: ActionFunctionArgs) {
   if (!["shipping", "billing"].includes(addressType)) {
     return cors(
       Response.json({ userErrors: [{ message: "addressType must be 'shipping' or 'billing'." }] }, { status: 400 }),
-    );
-  }
-
-  const { isLimitReached, maxEdits } = await checkOrderEditLimit({ shop: storeDomain, orderId });
-  if (isLimitReached) {
-    return cors(
-      Response.json(
-        {
-          userErrors: [
-            { message: `You have reached the maximum allowed edits (${maxEdits} edits) for this order.` },
-          ],
-        },
-        { status: 422 },
-      ),
     );
   }
 

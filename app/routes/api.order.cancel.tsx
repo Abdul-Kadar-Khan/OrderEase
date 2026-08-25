@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate, unauthenticated } from "../shopify.server";
 import { trackOrderEdit } from "../utils/analyticsHelper.server";
-import { checkOrderEditLimit } from "../utils/editLimitHelper.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { cors } = await authenticate.public.customerAccount(request);
@@ -36,20 +35,6 @@ export async function action({ request }: ActionFunctionArgs) {
       Response.json(
         { userErrors: [{ message: "Missing orderId." }] },
         { status: 400 },
-      ),
-    );
-  }
-
-  const { isLimitReached, maxEdits } = await checkOrderEditLimit({ shop: storeDomain, orderId });
-  if (isLimitReached) {
-    return cors(
-      Response.json(
-        {
-          userErrors: [
-            { message: `You have reached the maximum allowed edits (${maxEdits} edits) for this order.` },
-          ],
-        },
-        { status: 422 },
       ),
     );
   }
