@@ -335,7 +335,10 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "maxEdits") {
       setIsSaved(true);
-      const timer = setTimeout(() => setIsSaved(false), 3000);
+      if (typeof window !== "undefined" && (window as any).shopify?.toast) {
+        (window as any).shopify.toast.show("Maximum order edit limit updated successfully!");
+      }
+      const timer = setTimeout(() => setIsSaved(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [fetcher.state, fetcher.data]);
@@ -405,8 +408,8 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
             <s-box padding="base" border="base" borderRadius="base">
               <s-stack direction="block" gap="base">
                 <s-text type="strong">Custom Max Edits Limit</s-text>
-                <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
-                  <s-stack direction="block" gap="small">
+                <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                  <div style={{ flex: 1 }}>
                     <s-text color="subdued">Number of Edits Allowed</s-text>
                     <input
                       type="number"
@@ -414,41 +417,43 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
                       value={customVal}
                       onChange={(e) => setCustomVal(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       style={{
+                        marginTop: "6px",
                         padding: "8px 12px",
                         borderRadius: "6px",
                         border: "1px solid #c9cccf",
                         fontSize: "14px",
                         width: "100%",
+                        boxSizing: "border-box",
                       }}
                     />
-                  </s-stack>
-                  <s-stack direction="block" gap="small">
-                    <s-text color="subdued" style={{ visibility: "hidden" }}>Save</s-text>
-                    <button
-                      type="button"
-                      onClick={() => handleSave("custom", customVal)}
-                      style={{
-                        padding: "9px 18px",
-                        borderRadius: "6px",
-                        border: "none",
-                        backgroundColor: "#008060",
-                        color: "#ffffff",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Save Limit
-                    </button>
-                  </s-stack>
-                </s-grid>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSave("custom", customVal)}
+                    style={{
+                      padding: "9px 18px",
+                      borderRadius: "6px",
+                      border: "none",
+                      backgroundColor: "#008060",
+                      color: "#ffffff",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      height: "36px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Save Limit
+                  </button>
+                </div>
               </s-stack>
             </s-box>
           )}
 
           {isSaved && (
-            <s-badge tone="success">
-              Maximum edit limit saved successfully!
-            </s-badge>
+            <s-banner tone="success">
+              Maximum order edit limit saved successfully!
+            </s-banner>
           )}
         </s-stack>
       </s-box>
@@ -498,7 +503,10 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "timeLimit") {
       setIsSaved(true);
-      const timer = setTimeout(() => setIsSaved(false), 3000);
+      if (typeof window !== "undefined" && (window as any).shopify?.toast) {
+        (window as any).shopify.toast.show("Order edit time limit updated successfully!");
+      }
+      const timer = setTimeout(() => setIsSaved(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [fetcher.state, fetcher.data]);
@@ -570,12 +578,11 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
               padding="base"
               border="base"
               borderRadius="base"
-              // background="surface"
             >
               <s-stack direction="block" gap="base">
                 <s-text type="strong">Custom Duration</s-text>
-                <s-grid gridTemplateColumns="1fr 1fr auto" gap="base" alignItems="center">
-                  <s-stack direction="block" gap="small">
+                <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
                     <s-text color="subdued">Duration Value</s-text>
                     <input
                       type="number"
@@ -583,26 +590,30 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
                       value={customVal}
                       onChange={(e) => setCustomVal(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       style={{
+                        marginTop: "6px",
                         padding: "8px 12px",
                         borderRadius: "6px",
                         border: "1px solid #c9cccf",
                         fontSize: "14px",
                         width: "100%",
+                        boxSizing: "border-box",
                       }}
                     />
-                  </s-stack>
+                  </div>
 
-                  <s-stack direction="block" gap="small">
+                  <div style={{ flex: 1, minWidth: "140px" }}>
                     <s-text color="subdued">Time Unit</s-text>
                     <select
                       value={customUnitVal}
                       onChange={(e) => setCustomUnitVal(e.target.value)}
                       style={{
+                        marginTop: "6px",
                         padding: "8px 12px",
                         borderRadius: "6px",
                         border: "1px solid #c9cccf",
                         fontSize: "14px",
                         width: "100%",
+                        boxSizing: "border-box",
                         backgroundColor: "#ffffff",
                       }}
                     >
@@ -610,35 +621,35 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
                       <option value="hours">Hours</option>
                       <option value="days">Days</option>
                     </select>
-                  </s-stack>
+                  </div>
 
-                  <s-stack direction="block" gap="small">
-                    <s-text color="subdued" style={{ visibility: "hidden" }}>Save</s-text>
-                    <button
-                      type="button"
-                      onClick={() => handleSave("custom", customVal, customUnitVal)}
-                      style={{
-                        padding: "9px 18px",
-                        borderRadius: "6px",
-                        border: "none",
-                        backgroundColor: "#008060",
-                        color: "#ffffff",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Save Custom Limit
-                    </button>
-                  </s-stack>
-                </s-grid>
+                  <button
+                    type="button"
+                    onClick={() => handleSave("custom", customVal, customUnitVal)}
+                    style={{
+                      padding: "9px 18px",
+                      borderRadius: "6px",
+                      border: "none",
+                      backgroundColor: "#008060",
+                      color: "#ffffff",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      height: "36px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Save Custom Limit
+                  </button>
+                </div>
               </s-stack>
             </s-box>
           )}
 
           {isSaved && (
-            <s-badge tone="success">
+            <s-banner tone="success">
               Time limit settings saved successfully!
-            </s-badge>
+            </s-banner>
           )}
         </s-stack>
       </s-box>
