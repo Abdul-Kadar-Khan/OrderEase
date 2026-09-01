@@ -388,21 +388,32 @@ export async function updateOrderNote({ orderId, note }) {
  * @returns {Promise<{ settings: Record<string, boolean>, timeLimit: Object|null, editLimit: Object|null }>}
  */
 export async function getServiceSettings(orderId) {
-  const token = await shopify.sessionToken.get();
+  let token = "";
+  try {
+    if (typeof shopify !== 'undefined' && shopify.sessionToken?.get) {
+      token = await shopify.sessionToken.get();
+    }
+  } catch (e) {
+    // silent
+  }
+
   const url = orderId
     ? `${APP_URL}/api/service-settings?orderId=${encodeURIComponent(orderId)}`
     : `${APP_URL}/api/service-settings`;
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(url, { headers });
 
-  if (!response.ok) {
-    // If the call fails, default to showing all features
-    return { settings: {}, editLimit: { maxEdits: null, currentEditCount: 0, isLimitReached: false } };
+    if (!response.ok) {
+      return { settings: {}, hasGooglePlacesKey: true, editLimit: { maxEdits: null, currentEditCount: 0, isLimitReached: false } };
+    }
+
+    return await response.json();
+  } catch (err) {
+    return { settings: {}, hasGooglePlacesKey: true, editLimit: { maxEdits: null, currentEditCount: 0, isLimitReached: false } };
   }
-
-  return response.json();
 }
 
 /**
@@ -436,5 +447,39 @@ export async function checkVariantQuantity(variantId) {
   } catch (err) {
     console.warn('Inventory check failed:', err);
     return null;
+  }
+}
+
+/**
+ * Fetch location suggestions (Google Places / Geocoding autocomplete).
+ * @param {string} query - Location query (e.g., "Indore")
+ * @returns {Promise<Array<{id: string, description: string, mainText: string, secondaryText: string, address1: string, city: string, province: string, zip: string, countryCode: string, country: string}>>}
+ */
+export async function getLocationSuggestions(query) {
+  if (!query || query.trim().length < 2) return [];
+
+  let token = "";
+  try {
+    if (typeof shopify !== 'undefined' && shopify.sessionToken?.get) {
+      token = await shopify.sessionToken.get();
+    }
+  } catch (tokenErr) {
+    // silent
+  }
+
+  const targetUrl = `${APP_URL}/api/location-suggestions?q=${encodeURIComponent(query.trim())}`;
+
+  try {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(targetUrl, { headers });
+
+    if (!response.ok) return [];
+
+    const result = await response.json();
+    return result.suggestions || [];
+  } catch (err) {
+    return [];
   }
 }

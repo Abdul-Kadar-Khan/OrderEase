@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
-import { getShippingAddress, updateOrderAddress } from '../../utils/api.js';
-import { getExtensionOrderId, formatOrderId, safeNavigate } from '../../utils/shopifyHelpers.js';
+import { getShippingAddress, updateOrderAddress, getLocationSuggestions, getServiceSettings } from '../../utils/api.js';
+import { getExtensionOrderId, formatOrderId } from '../../utils/shopifyHelpers.js';
 
-// Country options — common subset; extend as needed
+// Common country options — extended dynamically if another country is selected from Google suggestions
 const COUNTRIES = [
   { code: 'US', name: 'United States' },
   { code: 'GB', name: 'United Kingdom' },
@@ -32,12 +32,36 @@ export function ChangeAddress({ orderId: propOrderId }) {
   const orderId = formatOrderId(propOrderId) || getExtensionOrderId();
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [countriesList, setCountriesList] = useState(COUNTRIES);
   const [loadingAddress, setLoadingAddress] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // ── Pre-fill from the existing shipping address on mount ──────────────────
+  // Service Settings & Merchant Google Places API Key Check
+  const [hasGoogleKey, setHasGoogleKey] = useState(false);
+
+  // Location suggestions state (Google Places & Geocoding autocomplete dropdown)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [autoFillMsg, setAutoFillMsg] = useState(null);
+
+  // ── Fetch Service Settings & check if Google API Key is configured ──────
+  useEffect(() => {
+    getServiceSettings(orderId)
+      .then((data) => {
+        if (data?.hasGooglePlacesKey) {
+          setHasGoogleKey(true);
+        } else {
+          setHasGoogleKey(false);
+        }
+      })
+      .catch(() => setHasGoogleKey(false));
+  }, [orderId]);
+
+  // ── Pre-fill from existing shipping address on mount ──────────────────
   useEffect(() => {
     if (!orderId) {
       setLoadingAddress(false);
@@ -49,6 +73,15 @@ export function ChangeAddress({ orderId: propOrderId }) {
     getShippingAddress({ orderId })
       .then((addr) => {
         if (cancelled || !addr) return;
+        const code = (addr.countryCode || 'US').toUpperCase();
+
+        setCountriesList((prev) => {
+          if (code && !prev.some((c) => c.code === code)) {
+            return [...prev, { code, name: code }];
+          }
+          return prev;
+        });
+
         setForm({
           firstName:   addr.firstName   || '',
           lastName:    addr.lastName    || '',
@@ -57,7 +90,7 @@ export function ChangeAddress({ orderId: propOrderId }) {
           city:        addr.city        || '',
           province:    addr.province    || '',
           zip:         addr.zip         || '',
-          countryCode: addr.countryCode || 'US',
+          countryCode: code,
           phone:       addr.phone       || '',
         });
       })
@@ -67,11 +100,105 @@ export function ChangeAddress({ orderId: propOrderId }) {
     return () => { cancelled = true; };
   }, [orderId]);
 
+  // ── Debounced Location Suggestions Fetcher ──────────────────────────────
+  useEffect(() => {
+    if (!hasGoogleKey) {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    const q = searchQuery.trim();
+    if (!q || q.length < 2) {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSuggestions(true);
+
+    const timer = setTimeout(() => {
+      getLocationSuggestions(q)
+        .then((items) => {
+          if (!cancelled) {
+            setSuggestions(items || []);
+            setShowSuggestions((items || []).length > 0);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setSuggestions([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLoadingSuggestions(false);
+        });
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, hasGoogleKey]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setError(null);
     setSuccess(false);
+
+    // Trigger location autocomplete dropdown if Google API key is configured
+    if (hasGoogleKey) {
+      if (field === 'city' && value.trim().length >= 2) {
+        setSearchQuery(value);
+        setShowSuggestions(true);
+      } else if (field === 'address1' && value.trim().length >= 3) {
+        setSearchQuery(value);
+        setShowSuggestions(true);
+      }
+    }
+  }
+
+  function selectSuggestion(item) {
+    if (!item) return;
+
+    const cCode = (item.countryCode || form.countryCode || 'US').toUpperCase();
+
+    // Ensure country code exists in dropdown list
+    setCountriesList((prev) => {
+      if (!prev.some((c) => c.code === cCode)) {
+        return [...prev, { code: cCode, name: item.country || cCode }];
+      }
+      return prev;
+    });
+
+    const newAddress1 = item.address1 || item.mainText || form.address1;
+    const newCity = item.city || item.mainText || form.city;
+    const newProvince = item.province || form.province;
+    const newZip = item.zip || form.zip;
+
+    setForm((prev) => ({
+      ...prev,
+      address1: newAddress1,
+      city: newCity,
+      province: newProvince,
+      zip: newZip,
+      countryCode: cCode,
+    }));
+
+    setShowSuggestions(false);
+    setSearchQuery('');
+    setError(null);
+    setSuccess(false);
+
+    const filledDetails = [
+      newAddress1,
+      newCity,
+      newProvince,
+      item.country || cCode,
+      newZip ? `ZIP: ${newZip}` : null
+    ].filter(Boolean);
+
+    setAutoFillMsg(`Auto-filled: ${filledDetails.join(', ')}`);
   }
 
   function validate() {
@@ -119,6 +246,78 @@ export function ChangeAddress({ orderId: propOrderId }) {
               Ensure your exact street address, apartment/suite number, and delivery city are completely accurate prior to package dispatch.
             </s-text>
           </s-stack>
+
+          {/* Location Autocomplete Input with Floating Dropdown (ONLY shown if merchant entered Google API Key) */}
+          {hasGoogleKey && (
+            <s-box background="subdued" padding="base" borderRadius="base">
+              <s-stack direction="block" gap="small-100">
+                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                  <s-text type="strong" size="small">
+                    📍 Google Location & City Autocomplete
+                  </s-text>
+                  {loadingSuggestions && <s-spinner size="small" />}
+                </s-stack>
+
+                <s-text-field
+                  label="Search City, Place or Postal Code"
+                  placeholder="Start typing e.g. Indore, 452007, Khargone..."
+                  value={searchQuery}
+                  disabled={submitting}
+                  onInput={(e) => {
+                    const target = e.currentTarget;
+                    if (target && 'value' in target) {
+                      setSearchQuery(String(target.value));
+                      setShowSuggestions(true);
+                      setAutoFillMsg(null);
+                    }
+                  }}
+                />
+
+                {/* Floating Location Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <s-box background="surface" padding="none" borderRadius="base" borderWidth="base">
+                    <s-stack direction="block" gap="none">
+                      <s-box padding="small-200" background="subdued">
+                        <s-text size="small" type="strong" color="subdued">
+                          SELECT MATCHING LOCATION ({suggestions.length})
+                        </s-text>
+                      </s-box>
+
+                      {suggestions.map((item, index) => (
+                        <s-clickable
+                          key={item.id || index}
+                          onClick={(e) => {
+                            if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                            selectSuggestion(item);
+                          }}
+                        >
+                          <s-box
+                            padding="base"
+                            borderWidth={index > 0 ? "small" : "none"}
+                            background="surface"
+                          >
+                            <s-stack direction="block" gap="extra-small">
+                              <s-stack direction="inline" gap="small-100" alignItems="center">
+                                <s-text type="strong">📍 {item.mainText}</s-text>
+                                {item.zip && <s-badge tone="info">{item.zip}</s-badge>}
+                              </s-stack>
+                              <s-text size="small" color="subdued">
+                                {item.secondaryText || item.description}
+                              </s-text>
+                            </s-stack>
+                          </s-box>
+                        </s-clickable>
+                      ))}
+                    </s-stack>
+                  </s-box>
+                )}
+
+                {autoFillMsg && (
+                  <s-banner tone="success">{autoFillMsg}</s-banner>
+                )}
+              </s-stack>
+            </s-box>
+          )}
 
           {success && (
             <s-banner tone="success">Shipping address updated successfully!</s-banner>
@@ -233,7 +432,7 @@ export function ChangeAddress({ orderId: propOrderId }) {
                   if (target && 'value' in target) handleChange('countryCode', String(target.value));
                 }}
               >
-                {COUNTRIES.map((c) => (
+                {countriesList.map((c) => (
                   <s-option key={c.code} value={c.code}>{c.name}</s-option>
                 ))}
               </s-select>
@@ -266,4 +465,3 @@ export function ChangeAddress({ orderId: propOrderId }) {
     </s-stack>
   );
 }
-

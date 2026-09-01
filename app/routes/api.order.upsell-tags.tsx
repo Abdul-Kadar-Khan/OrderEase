@@ -6,7 +6,7 @@ import { authenticate, unauthenticated } from "../shopify.server";
  *
  * Returns the deduplicated list of upsell search tags derived from the
  * active line items in the order. For each product tag "X" found on an
- * active line item, we emit "X-ex" — the caller can then search the
+ * active line item, we emit "X-upshell" — the caller can then search the
  * Storefront API for products with those tags.
  */
 const ORDER_TAGS_QUERY = `#graphql
@@ -60,7 +60,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     for (const { node } of edges) {
       if (node.currentQuantity > 0 && node.product?.tags) {
         for (const tag of node.product.tags) {
-          upsellTags.add(`${tag}-ex`);
+          upsellTags.add(`${tag}-upshell`);
         }
       }
     }

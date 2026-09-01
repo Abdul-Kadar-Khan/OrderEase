@@ -292,8 +292,7 @@ export default function HelpPage(): JSX.Element {
                   </s-stack>
                   <s-paragraph color="subdued">
                     Displays smart product recommendations directly inside the
-                    order edit module, prompting customers to add complimentary
-                    products to their pending order.
+                    order edit module. Recommendation rules are driven by tag pairing: items tagged with [tag] suggest catalog products tagged with [tag]-upshell.
                   </s-paragraph>
                 </s-stack>
               </s-box>
@@ -529,6 +528,66 @@ export default function HelpPage(): JSX.Element {
               </s-stack>
             </s-box>
           </s-section>
+
+          <s-section heading="4. Google Places & Location Autocomplete Configuration">
+            <s-box padding="large" border="base" borderRadius="base">
+              <s-stack direction="block" gap="base">
+                <s-text type="strong">
+                  Enabling Address Autocomplete for Storefront Customers
+                </s-text>
+                <s-paragraph color="subdued">
+                  OrderEase allows merchants to connect their own Google Places API Key on the Active Services page. Once configured, customers editing their shipping address will get real-time address suggestions and auto-complete dropdowns.
+                </s-paragraph>
+                <s-grid gridTemplateColumns="1fr 1fr" gap="large">
+                  <s-stack direction="block" gap="small">
+                    <s-text type="strong">Active API Key Setup</s-text>
+                    <s-paragraph color="subdued">
+                      Enter your Google API Key under the <strong>Google Places & Location Suggestions</strong> section on the Active Services page and click <strong>Save Key</strong>. The key is securely stored per shop.
+                    </s-paragraph>
+                  </s-stack>
+                  <s-stack direction="block" gap="small">
+                    <s-text type="strong">Removing or Clearing Key</s-text>
+                    <s-paragraph color="subdued">
+                      To disable autocomplete, click the red <strong>Delete Key</strong> button. The key will be deleted from your database, and storefront forms will automatically hide location suggestions without causing errors.
+                    </s-paragraph>
+                  </s-stack>
+                </s-grid>
+                <s-banner tone="info">
+                  <strong>Google Cloud Setup Requirement:</strong> Ensure both <strong>Places API</strong> (or Places API New) and <strong>Geocoding API</strong> are enabled in your Google Cloud Console project, and that key restrictions permit these services.
+                </s-banner>
+              </s-stack>
+            </s-box>
+          </s-section>
+
+          <s-section heading="5. Product Tags & Upsell Management Configuration">
+            <s-box padding="large" border="base" borderRadius="base">
+              <s-stack direction="block" gap="base">
+                <s-text type="strong">
+                  Configuring Tag-Based Product Recommendations
+                </s-text>
+                <s-paragraph color="subdued">
+                  OrderEase features an automated tag-based recommendation engine. Items in a customer's order tagged with <strong>[tag]</strong> (e.g. <code>Summer</code>) will trigger smart upsell recommendations for store products tagged with <strong>[tag]-upshell</strong> (e.g. <code>Summer-upshell</code>).
+                </s-paragraph>
+                <s-grid gridTemplateColumns="1fr 1fr" gap="large">
+                  <s-stack direction="block" gap="small">
+                    <s-text type="strong">Searching & Viewing Product Tags</s-text>
+                    <s-paragraph color="subdued">
+                      On the <strong>Active Services</strong> page, scroll to <strong>Product Tags &amp; Upsell Management</strong>. Use the search input to find products by title or tag. Active <code>-upshell</code> tags are highlighted with a green badge and ⚡ icon.
+                    </s-paragraph>
+                  </s-stack>
+                  <s-stack direction="block" gap="small">
+                    <s-text type="strong">Adding &amp; Removing Tags</s-text>
+                    <s-paragraph color="subdued">
+                      Type any tag into the product input field and click <strong>+ Tag</strong>, or use the <strong>+ Quick Add [tag]-upshell</strong> shortcut. Click the <strong>×</strong> on any tag badge to instantly remove it.
+                    </s-paragraph>
+                  </s-stack>
+                </s-grid>
+                <s-banner tone="success">
+                  Product tags are updated in real-time directly on your store's Shopify Admin catalog.
+                </s-banner>
+              </s-stack>
+            </s-box>
+          </s-section>
         </s-stack>
       )}
 
@@ -537,6 +596,69 @@ export default function HelpPage(): JSX.Element {
         <s-stack direction="block" gap="base">
           <s-section heading="Frequently Asked Questions (FAQ)">
             <s-stack direction="block" gap="base">
+              <s-box padding="large" border="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text type="strong">
+                    Q: How does the Product Upsell tag pairing system work?
+                  </s-text>
+                  <s-paragraph color="subdued">
+                    OrderEase checks the product tags of active items in a customer's order. For each tag <strong>X</strong> on an ordered item, the app searches your catalog for products tagged with <strong>X-upshell</strong> and presents them as recommended additions in the order status / edit screen.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
+
+              <s-box padding="large" border="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text type="strong">
+                    Q: How do I manage upsell tags for my products?
+                  </s-text>
+                  <s-paragraph color="subdued">
+                    1. Navigate to <strong>Active Services</strong> and scroll down to <strong>Product Tags &amp; Upsell Management</strong>.<br />
+                    2. Search for any product by title or tag.<br />
+                    3. Type a tag into the product's tag field and click <strong>+ Tag</strong> or <strong>+ Quick Add [tag]-upshell</strong>.<br />
+                    4. To remove a tag, click the <strong>×</strong> button on the tag badge.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
+
+              <s-box padding="large" border="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text type="strong">
+                    Q: How do I set up Google Places Location Suggestions for customer address edits?
+                  </s-text>
+                  <s-paragraph color="subdued">
+                    1. Go to the Active Services page and scroll to <strong>Google Places & Location Suggestions</strong>.<br />
+                    2. Paste your Google Places API Key into the field and click <strong>Save Key</strong>.<br />
+                    3. Make sure in your Google Cloud Console that <strong>Places API</strong> (or Places API New) and <strong>Geocoding API</strong> are enabled for your project.<br />
+                    4. Once saved, customers editing shipping addresses on Checkout or Customer Account pages will get instant location autocomplete suggestions.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
+
+              <s-box padding="large" border="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text type="strong">
+                    Q: Why are location suggestions returning errors or REQUEST_DENIED?
+                  </s-text>
+                  <s-paragraph color="subdued">
+                    If location suggestions do not appear, check the following in your Google Cloud Console:<br />
+                    • <strong>API Enablement:</strong> Verify that <em>Places API</em> (or <em>Places API New</em>) is turned ON under Google Cloud -&gt; APIs &amp; Services -&gt; Library.<br />
+                    • <strong>API Key Restrictions:</strong> Under APIs &amp; Services -&gt; Credentials, check your API Key. Set API restrictions to <em>Don't restrict key</em> or ensure <em>Places API</em> is explicitly selected.<br />
+                    • <strong>Billing Account:</strong> Ensure your Google Cloud project has an active billing account linked.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
+
+              <s-box padding="large" border="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text type="strong">
+                    Q: How do I remove my Google Places API Key?
+                  </s-text>
+                  <s-paragraph color="subdued">
+                    Go to the Active Services page under <strong>Google Places &amp; Location Suggestions</strong> and click the red <strong>Delete Key</strong> button. This clears your API key from the database. When no key exists, location suggestions are safely hidden on customer address forms.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
               <s-box padding="large" border="base" borderRadius="base">
                 <s-stack direction="block" gap="small">
                   <s-text type="strong">

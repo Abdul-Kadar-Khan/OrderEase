@@ -51,6 +51,12 @@ model OrderEditTimeLimit {
   updatedAt   DateTime @updatedAt
 }
 
+model GooglePlacesConfig {
+  shop      String   @id        // merchant shop domain
+  apiKey    String?             // Google Places & Geocoding API key for this merchant
+  updatedAt DateTime @updatedAt
+}
+
 model EditedOrder {
   id        String   @id @default(uuid())
   shop      String
@@ -70,4 +76,3 @@ model FeatureUsage {
 
   @@id([shop, featureId])
 }
-

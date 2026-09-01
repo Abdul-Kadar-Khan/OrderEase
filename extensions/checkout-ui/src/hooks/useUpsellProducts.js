@@ -35,8 +35,39 @@ const PRODUCTS_BY_TAG_QUERY = `#graphql
   }
 `;
 
+const FALLBACK_PRODUCTS_QUERY = `#graphql
+  query SearchPopularProducts($first: Int!) {
+    products(first: $first) {
+      nodes {
+        id
+        title
+        featuredImage {
+          url
+          altText
+        }
+        variants(first: 10) {
+          nodes {
+            id
+            title
+            availableForSale
+            selectedOptions {
+              name
+              value
+            }
+            price {
+              amount
+              currencyCode
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 /**
  * Fetches upsell product recommendations based on tags of active order items.
+ * If no specific upsell tags are found, falls back to top catalog products.
  */
 export function useUpsellProducts(initialOrderId) {
   const normalizedInitial = formatOrderId(initialOrderId);
@@ -90,25 +121,34 @@ export function useUpsellProducts(initialOrderId) {
       setProducts([]);
 
       try {
-        const { tags } = await getUpsellTags({ orderId: resolvedOrderId });
+        let fetched = [];
 
-        if (!tags || tags.length === 0) {
-          if (!cancelled) setProducts([]);
-          return;
+        // Step 1: Try fetching upsell tags from backend
+        try {
+          const { tags } = await getUpsellTags({ orderId: resolvedOrderId });
+
+          if (tags && tags.length > 0) {
+            const tagQuery = tags.map((t) => `tag:"${t}"`).join(' OR ');
+            const { data, errors } = await shopify.query(PRODUCTS_BY_TAG_QUERY, {
+              variables: { query: tagQuery, first: 8 },
+            });
+            if (!errors?.length) {
+              fetched = data?.products?.nodes ?? [];
+            }
+          }
+        } catch (e) {
+          console.warn('[useUpsellProducts] Tag query failed, using fallback catalog query:', e);
         }
 
-        const tagQuery = tags.map((t) => `tag:"${t}"`).join(' OR ');
-
-        const { data, errors } = await shopify.query(PRODUCTS_BY_TAG_QUERY, {
-          variables: { query: tagQuery, first: 8 },
-        });
-
-        if (errors?.length) {
-          throw new Error(errors[0].message);
+        // Step 2: Fall back to general store catalog if no tag-matched products found
+        if (fetched.length === 0) {
+          const { data } = await shopify.query(FALLBACK_PRODUCTS_QUERY, {
+            variables: { first: 8 },
+          });
+          fetched = data?.products?.nodes ?? [];
         }
 
-        const fetched = data?.products?.nodes ?? [];
-
+        // Step 3: Filter out any products already in the customer's order
         const lines = getExtensionLines();
         const orderProductIds = new Set(
           lines

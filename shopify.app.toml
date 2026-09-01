@@ -56,6 +56,6 @@ automatically_update_urls_on_dev = false
 
 [app_proxy]
 url = "https://orderease-production.up.railway.app"
-subpath = "order-ease" 
+subpath = "order-ease"  
 prefix = "apps"
  

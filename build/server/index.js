@@ -245,7 +245,7 @@ async function checkOrderEditLimit({
     maxEdits
   };
 }
-async function loader$s({
+async function loader$t({
   request
 }) {
   const {
@@ -260,7 +260,7 @@ async function loader$s({
     }
   }));
 }
-async function action$o({
+async function action$p({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
@@ -466,10 +466,10 @@ async function action$o({
 }
 const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$o,
-  loader: loader$s
+  action: action$p,
+  loader: loader$t
 }, Symbol.toStringTag, { value: "Module" }));
-async function loader$r({
+async function loader$s({
   request
 }) {
   const {
@@ -484,7 +484,7 @@ async function loader$r({
     }
   }));
 }
-async function action$n({
+async function action$o({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
@@ -688,10 +688,10 @@ async function action$n({
 }
 const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$n,
-  loader: loader$r
+  action: action$o,
+  loader: loader$s
 }, Symbol.toStringTag, { value: "Module" }));
-async function loader$q({
+async function loader$r({
   request
 }) {
   const {
@@ -707,7 +707,7 @@ async function loader$q({
     }
   }));
 }
-async function action$m({
+async function action$n({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -893,10 +893,10 @@ async function action$m({
 }
 const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$m,
-  loader: loader$q
+  action: action$n,
+  loader: loader$r
 }, Symbol.toStringTag, { value: "Module" }));
-const action$l = async ({
+const action$m = async ({
   request
 }) => {
   const {
@@ -921,7 +921,279 @@ const action$l = async ({
 };
 const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$l
+  action: action$m
+}, Symbol.toStringTag, { value: "Module" }));
+async function loader$q({
+  request
+}) {
+  var _a2, _b, _c;
+  let cors = (res) => res;
+  let storeDomain = "";
+  try {
+    const authResult = await authenticate.public.customerAccount(request);
+    cors = authResult.cors;
+    if ((_a2 = authResult.sessionToken) == null ? void 0 : _a2.dest) {
+      storeDomain = authResult.sessionToken.dest.replace(/^https?:\/\//, "");
+    }
+  } catch (e) {
+    cors = (res) => {
+      const newHeaders = new Headers(res.headers);
+      newHeaders.set("Access-Control-Allow-Origin", "*");
+      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      return new Response(res.body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: newHeaders
+      });
+    };
+  }
+  const url = new URL(request.url);
+  const q = ((_b = url.searchParams.get("q")) == null ? void 0 : _b.trim()) || "";
+  const shopParam = (_c = url.searchParams.get("shop")) == null ? void 0 : _c.trim();
+  if (shopParam) storeDomain = shopParam;
+  if (!q || q.length < 2) {
+    return cors(Response.json({
+      suggestions: []
+    }));
+  }
+  const suggestions = await fetchLocationSuggestions(q, storeDomain);
+  return cors(Response.json({
+    suggestions
+  }));
+}
+async function action$l({
+  request
+}) {
+  var _a2;
+  let cors = (res) => res;
+  let storeDomain = "";
+  try {
+    const authResult = await authenticate.public.customerAccount(request);
+    cors = authResult.cors;
+    if ((_a2 = authResult.sessionToken) == null ? void 0 : _a2.dest) {
+      storeDomain = authResult.sessionToken.dest.replace(/^https?:\/\//, "");
+    }
+  } catch (e) {
+    cors = (res) => {
+      const newHeaders = new Headers(res.headers);
+      newHeaders.set("Access-Control-Allow-Origin", "*");
+      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      return new Response(res.body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: newHeaders
+      });
+    };
+  }
+  if (request.method === "OPTIONS") {
+    return cors(new Response(null, {
+      status: 200
+    }));
+  }
+  try {
+    const body = await request.json().catch(() => ({}));
+    const q = (body.q || "").trim();
+    if (body.shop) storeDomain = String(body.shop).trim();
+    if (!q || q.length < 2) {
+      return cors(Response.json({
+        suggestions: []
+      }));
+    }
+    const suggestions = await fetchLocationSuggestions(q, storeDomain);
+    return cors(Response.json({
+      suggestions
+    }));
+  } catch (err) {
+    return cors(Response.json({
+      suggestions: []
+    }));
+  }
+}
+async function fetchLocationSuggestions(query, storeDomain) {
+  var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
+  let googleApiKey = "";
+  const cleanDomain = storeDomain ? storeDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim() : "";
+  if (cleanDomain) {
+    try {
+      const googleConfig = await prisma.googlePlacesConfig.findUnique({
+        where: {
+          shop: cleanDomain
+        }
+      });
+      if ((googleConfig == null ? void 0 : googleConfig.apiKey) && googleConfig.apiKey.trim().length > 0) {
+        googleApiKey = googleConfig.apiKey.trim();
+      }
+    } catch (e) {
+      console.warn("[api.location-suggestions] DB lookup error for shop:", cleanDomain, e);
+    }
+  }
+  if (!googleApiKey) {
+    return [];
+  }
+  try {
+    const newPlacesUrl = "https://places.googleapis.com/v1/places:autocomplete";
+    const resNew = await fetch(newPlacesUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": googleApiKey
+      },
+      body: JSON.stringify({
+        input: query
+      })
+    });
+    if (resNew.ok) {
+      const dataNew = await resNew.json();
+      if (Array.isArray(dataNew.suggestions) && dataNew.suggestions.length > 0) {
+        const items = [];
+        for (const s of dataNew.suggestions.slice(0, 5)) {
+          const pred = s.placePrediction;
+          if (!pred) continue;
+          const rawPlaceId = pred.placeId || (pred.place ? pred.place.replace(/^places\//, "") : "");
+          const mainText = ((_b = (_a2 = pred.structuredFormat) == null ? void 0 : _a2.mainText) == null ? void 0 : _b.text) || query;
+          const secondaryText = ((_d = (_c = pred.structuredFormat) == null ? void 0 : _c.secondaryText) == null ? void 0 : _d.text) || "";
+          const description = ((_e = pred.text) == null ? void 0 : _e.text) || `${mainText}, ${secondaryText}`;
+          let address1 = mainText;
+          let city = mainText;
+          let province = "";
+          let zip = "";
+          let countryCode = "";
+          let country = "";
+          if (rawPlaceId) {
+            try {
+              const detailRes = await fetch(`https://places.googleapis.com/v1/places/${rawPlaceId}`, {
+                headers: {
+                  "X-Goog-Api-Key": googleApiKey,
+                  "X-Goog-FieldMask": "addressComponents,formattedAddress"
+                }
+              });
+              if (detailRes.ok) {
+                const detailData = await detailRes.json();
+                const comps = detailData.addressComponents || [];
+                let streetNum = "";
+                let route34 = "";
+                let neighborhood = "";
+                for (const c of comps) {
+                  const types = c.types || [];
+                  if (types.includes("street_number")) streetNum = c.longText || c.shortText;
+                  if (types.includes("route")) route34 = c.longText || c.shortText;
+                  if (types.includes("sublocality") || types.includes("neighborhood") || types.includes("sublocality_level_1")) {
+                    neighborhood = c.longText || c.shortText;
+                  }
+                  if (types.includes("locality") || types.includes("postal_town")) {
+                    city = c.longText || c.shortText;
+                  }
+                  if (!city && (types.includes("administrative_area_level_2") || types.includes("sublocality_level_1"))) {
+                    city = c.longText || c.shortText;
+                  }
+                  if (types.includes("administrative_area_level_1")) province = c.longText || c.shortText;
+                  if (types.includes("postal_code")) zip = c.longText || c.shortText;
+                  if (types.includes("country")) {
+                    country = c.longText || c.shortText;
+                    countryCode = (c.shortText || "").toUpperCase();
+                  }
+                }
+                if (!city) city = neighborhood || mainText;
+                address1 = [streetNum, route34].filter(Boolean).join(" ") || neighborhood || mainText;
+              }
+            } catch (e) {
+            }
+          }
+          items.push({
+            id: rawPlaceId || String(Math.random()),
+            description,
+            mainText,
+            secondaryText,
+            address1: address1 || mainText,
+            city: city || mainText,
+            province,
+            zip,
+            countryCode,
+            country
+          });
+        }
+        if (items.length > 0) {
+          return items;
+        }
+      }
+    }
+  } catch (e) {
+  }
+  try {
+    const gUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=geocode&key=${googleApiKey}`;
+    const res = await fetch(gUrl);
+    const data = await res.json();
+    if (data.status === "OK" && Array.isArray(data.predictions) && data.predictions.length > 0) {
+      const googleItems = [];
+      for (const pred of data.predictions.slice(0, 5)) {
+        const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${pred.place_id}&fields=address_components,formatted_address&key=${googleApiKey}`;
+        const detailRes = await fetch(detailUrl);
+        const detailData = await detailRes.json();
+        if (detailData.status === "OK" && detailData.result) {
+          const comps = detailData.result.address_components || [];
+          let streetNum = "";
+          let route34 = "";
+          let neighborhood = "";
+          let city = "";
+          let province = "";
+          let zip = "";
+          let countryCode = "";
+          let country = "";
+          for (const c of comps) {
+            const types = c.types || [];
+            if (types.includes("street_number")) streetNum = c.long_name;
+            if (types.includes("route")) route34 = c.long_name;
+            if (types.includes("sublocality") || types.includes("neighborhood") || types.includes("sublocality_level_1")) {
+              neighborhood = c.long_name;
+            }
+            if (types.includes("locality") || types.includes("postal_town")) {
+              city = c.long_name;
+            }
+            if (!city && (types.includes("administrative_area_level_2") || types.includes("sublocality_level_1"))) {
+              city = c.long_name;
+            }
+            if (types.includes("administrative_area_level_1")) province = c.long_name;
+            if (types.includes("postal_code")) zip = c.long_name;
+            if (types.includes("country")) {
+              country = c.long_name;
+              countryCode = (c.short_name || "").toUpperCase();
+            }
+          }
+          if (!city) {
+            city = neighborhood || (((_f = pred.structured_formatting) == null ? void 0 : _f.main_text) || "").replace(/\d+/g, "").trim();
+          }
+          const address1 = [streetNum, route34].filter(Boolean).join(" ") || neighborhood || ((_g = pred.structured_formatting) == null ? void 0 : _g.main_text) || "";
+          googleItems.push({
+            id: pred.place_id,
+            description: detailData.result.formatted_address || pred.description,
+            mainText: ((_h = pred.structured_formatting) == null ? void 0 : _h.main_text) || query,
+            secondaryText: ((_i = pred.structured_formatting) == null ? void 0 : _i.secondary_text) || "",
+            address1,
+            city,
+            province,
+            zip,
+            countryCode,
+            country
+          });
+        }
+      }
+      if (googleItems.length > 0) {
+        return googleItems;
+      }
+    } else if (data.status === "REQUEST_DENIED") {
+      console.warn(`[api.location-suggestions] Google Places API rejected key: ${data.error_message || "REQUEST_DENIED"}`);
+    }
+  } catch (e) {
+    console.warn("[api.location-suggestions] Legacy Google Places API fetch error:", e);
+  }
+  return [];
+}
+const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  action: action$l,
+  loader: loader$q
 }, Symbol.toStringTag, { value: "Module" }));
 const GET_ORDER_DETAILS_QUERY = `#graphql
   query GetOrderLineItems($id: ID!) {
@@ -1088,7 +1360,7 @@ async function action$k({
     status: 405
   }));
 }
-const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$k,
   loader: loader$p
@@ -1111,7 +1383,7 @@ const action$j = async ({
   }
   return new Response();
 };
-const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$j
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1173,7 +1445,7 @@ async function loader$o({
     } of edges) {
       if (node.currentQuantity > 0 && ((_e = node.product) == null ? void 0 : _e.tags)) {
         for (const tag of node.product.tags) {
-          upsellTags.add(`${tag}-ex`);
+          upsellTags.add(`${tag}-upshell`);
         }
       }
     }
@@ -1209,7 +1481,7 @@ async function action$i({
     status: 405
   }));
 }
-const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$i,
   loader: loader$o
@@ -1217,14 +1489,34 @@ const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
 async function loader$n({
   request
 }) {
-  const {
-    sessionToken,
-    cors
-  } = await authenticate.public.customerAccount(request);
-  const storeDomain = sessionToken.dest.replace(/^https?:\/\//, "");
+  var _a2;
+  let cors = (res) => res;
+  let storeDomain = "";
+  try {
+    const authResult = await authenticate.public.customerAccount(request);
+    cors = authResult.cors;
+    if ((_a2 = authResult.sessionToken) == null ? void 0 : _a2.dest) {
+      storeDomain = authResult.sessionToken.dest.replace(/^https?:\/\//, "");
+    }
+  } catch (e) {
+    cors = (res) => {
+      const newHeaders = new Headers(res.headers);
+      newHeaders.set("Access-Control-Allow-Origin", "*");
+      newHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      return new Response(res.body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: newHeaders
+      });
+    };
+  }
   const url = new URL(request.url);
   const orderId = url.searchParams.get("orderId");
-  const rows = await prisma.serviceSettings.findMany({
+  const shopParam = url.searchParams.get("shop");
+  if (shopParam) storeDomain = shopParam;
+  storeDomain = storeDomain.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim();
+  const rows = storeDomain ? await prisma.serviceSettings.findMany({
     where: {
       shop: storeDomain
     },
@@ -1232,13 +1524,19 @@ async function loader$n({
       id: true,
       enabled: true
     }
-  });
-  const timeLimitRecord = await prisma.orderEditTimeLimit.findUnique({
+  }) : [];
+  const timeLimitRecord = storeDomain ? await prisma.orderEditTimeLimit.findUnique({
     where: {
       shop: storeDomain
     }
-  });
-  const editLimitInfo = orderId ? await checkOrderEditLimit({
+  }) : null;
+  const googleConfig = storeDomain ? await prisma.googlePlacesConfig.findUnique({
+    where: {
+      shop: storeDomain
+    }
+  }) : null;
+  const hasGooglePlacesKey = Boolean((googleConfig == null ? void 0 : googleConfig.apiKey) && googleConfig.apiKey.trim().length > 0);
+  const editLimitInfo = orderId && storeDomain ? await checkOrderEditLimit({
     shop: storeDomain,
     orderId
   }) : {
@@ -1252,6 +1550,7 @@ async function loader$n({
   }
   return cors(Response.json({
     settings,
+    hasGooglePlacesKey,
     timeLimit: timeLimitRecord ? {
       preset: timeLimitRecord.timeLimit,
       customValue: timeLimitRecord.customValue,
@@ -1288,7 +1587,7 @@ async function action$h({
     status: 405
   }));
 }
-const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$h,
   loader: loader$n
@@ -1786,7 +2085,7 @@ async function action$g({
     }));
   }
 }
-const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$g,
   loader: loader$m
@@ -2230,7 +2529,7 @@ async function action$f({
     }));
   }
 }
-const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$f,
   loader: loader$l
@@ -2717,7 +3016,7 @@ async function action$e({
     }));
   }
 }
-const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$e,
   loader: loader$k
@@ -3225,7 +3524,7 @@ async function action$d({
     }));
   }
 }
-const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$d,
   loader: loader$j
@@ -3747,7 +4046,7 @@ async function action$c({
     }));
   }
 }
-const route13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$c,
   loader: loader$i
@@ -4305,7 +4604,7 @@ async function action$b({
     }));
   }
 }
-const route14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$b,
   loader: loader$h
@@ -4899,7 +5198,7 @@ async function action$a({
     }));
   }
 }
-const route15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$a,
   loader: loader$g
@@ -5337,7 +5636,7 @@ async function loader$f({
     });
   }
 }
-const route16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   loader: loader$f
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6071,7 +6370,7 @@ async function action$9({
     }));
   }
 }
-const route17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$9,
   loader: loader$e
@@ -6485,7 +6784,7 @@ async function action$8({
     }));
   }
 }
-const route18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$8,
   loader: loader$d
@@ -6731,7 +7030,7 @@ async function action$7({
     }));
   }
 }
-const route19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$7,
   loader: loader$c
@@ -6911,7 +7210,7 @@ async function action$6({
     }));
   }
 }
-const route20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$6,
   loader: loader$b
@@ -7015,7 +7314,7 @@ const action$5 = async ({
     }));
   }
 };
-const route21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$5,
   loader: loader$a
@@ -7126,7 +7425,7 @@ async function action$4({
     }));
   }
 }
-const route22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$4,
   loader: loader$9
@@ -7313,7 +7612,7 @@ async function action$3({
     }));
   }
 }
-const route23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$3,
   loader: loader$8
@@ -7373,7 +7672,7 @@ const route$1 = UNSAFE_withComponentProps(function Auth() {
     })
   });
 });
-const route24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$2,
   default: route$1,
@@ -7463,7 +7762,7 @@ const route = UNSAFE_withComponentProps(function App2() {
     })
   });
 });
-const route25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: route,
   loader: loader$6
@@ -7477,7 +7776,7 @@ const loader$5 = async ({
 const headers$5 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-const route26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   headers: headers$5,
   loader: loader$5
@@ -7523,7 +7822,7 @@ const ErrorBoundary = UNSAFE_withErrorBoundaryProps(function ErrorBoundary2() {
 const headers$4 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-const route27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   ErrorBoundary,
   default: app,
@@ -7531,6 +7830,54 @@ const route27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   loader: loader$4
 }, Symbol.toStringTag, { value: "Module" }));
 const SSwitch = "s-switch";
+const GET_PRODUCTS_QUERY = `#graphql
+  query GetProductsForUpsellTags($query: String, $first: Int!) {
+    products(first: $first, query: $query) {
+      edges {
+        node {
+          id
+          title
+          handle
+          tags
+          featuredMedia {
+            preview {
+              image {
+                url
+                altText
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+const ADD_TAGS_MUTATION = `#graphql
+  mutation AddProductTags($id: ID!, $tags: [String!]!) {
+    tagsAdd(id: $id, tags: $tags) {
+      node {
+        id
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+const REMOVE_TAGS_MUTATION = `#graphql
+  mutation RemoveProductTags($id: ID!, $tags: [String!]!) {
+    tagsRemove(id: $id, tags: $tags) {
+      node {
+        id
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
 const SERVICES = [{
   id: "add-product",
   title: "Add Product to Order",
@@ -7591,9 +7938,10 @@ const loader$3 = async ({
   request
 }) => {
   const {
+    admin,
     session
   } = await authenticate.admin(request);
-  const shop = session.shop;
+  const shop = session.shop.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim();
   let rows = await prisma.serviceSettings.findMany({
     where: {
       shop
@@ -7639,6 +7987,12 @@ const loader$3 = async ({
       }
     });
   }
+  const googleConfig = await prisma.googlePlacesConfig.findUnique({
+    where: {
+      shop
+    }
+  });
+  const initialProducts = [];
   return {
     shop,
     services,
@@ -7647,18 +8001,164 @@ const loader$3 = async ({
       customValue: timeLimitRecord.customValue ?? 1,
       customUnit: timeLimitRecord.customUnit ?? "hours",
       maxEdits: timeLimitRecord.maxEdits ?? 3
-    }
+    },
+    googleApiKey: (googleConfig == null ? void 0 : googleConfig.apiKey) || "",
+    initialProducts
   };
 };
 const action$1 = async ({
   request
 }) => {
+  var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
   const {
+    admin,
     session
   } = await authenticate.admin(request);
-  const shop = session.shop;
+  const shop = session.shop.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim();
   const formData = await request.formData();
   const intent = formData.get("intent");
+  if (intent === "addProductTag") {
+    const productId = formData.get("productId");
+    const tag = (_a2 = formData.get("tag")) == null ? void 0 : _a2.trim();
+    if (!productId || !tag) {
+      return {
+        ok: false,
+        error: "Product ID and Tag are required"
+      };
+    }
+    console.log(`[ActiveServices Action] Adding tag "${tag}" to product ${productId}`);
+    const res = await admin.graphql(ADD_TAGS_MUTATION, {
+      variables: {
+        id: productId,
+        tags: [tag]
+      }
+    });
+    const json = await res.json();
+    const errors = ((_c = (_b = json.data) == null ? void 0 : _b.tagsAdd) == null ? void 0 : _c.userErrors) ?? [];
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        error: errors[0].message
+      };
+    }
+    return {
+      ok: true,
+      type: "productTag",
+      action: "added",
+      productId,
+      tag
+    };
+  }
+  if (intent === "removeProductTag") {
+    const productId = formData.get("productId");
+    const tag = (_d = formData.get("tag")) == null ? void 0 : _d.trim();
+    if (!productId || !tag) {
+      return {
+        ok: false,
+        error: "Product ID and Tag are required"
+      };
+    }
+    console.log(`[ActiveServices Action] Removing tag "${tag}" from product ${productId}`);
+    const res = await admin.graphql(REMOVE_TAGS_MUTATION, {
+      variables: {
+        id: productId,
+        tags: [tag]
+      }
+    });
+    const json = await res.json();
+    const errors = ((_f = (_e = json.data) == null ? void 0 : _e.tagsRemove) == null ? void 0 : _f.userErrors) ?? [];
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        error: errors[0].message
+      };
+    }
+    return {
+      ok: true,
+      type: "productTag",
+      action: "removed",
+      productId,
+      tag
+    };
+  }
+  if (intent === "searchProducts") {
+    const query = ((_g = formData.get("query")) == null ? void 0 : _g.trim()) || "";
+    console.log(`[ActiveServices Action] Searching products with query "${query}"`);
+    const res = await admin.graphql(GET_PRODUCTS_QUERY, {
+      variables: {
+        first: 12,
+        query: query ? `title:*${query}* OR tag:*${query}*` : void 0
+      }
+    });
+    const json = await res.json();
+    const edges = ((_i = (_h = json.data) == null ? void 0 : _h.products) == null ? void 0 : _i.edges) ?? [];
+    const products = edges.map((e) => {
+      var _a3, _b2, _c2;
+      return {
+        id: e.node.id,
+        title: e.node.title,
+        handle: e.node.handle,
+        tags: e.node.tags || [],
+        imageUrl: ((_c2 = (_b2 = (_a3 = e.node.featuredMedia) == null ? void 0 : _a3.preview) == null ? void 0 : _b2.image) == null ? void 0 : _c2.url) || ""
+      };
+    });
+    return {
+      ok: true,
+      type: "searchProducts",
+      products
+    };
+  }
+  if (intent === "saveGoogleApiKey") {
+    const apiKeyRaw = formData.get("googleApiKey");
+    const apiKey = apiKeyRaw ? apiKeyRaw.trim() : null;
+    console.log(`[ActiveServices Action] Saving Google Places API Key: shop=${shop}, hasKey=${Boolean(apiKey)}`);
+    const result2 = await prisma.googlePlacesConfig.upsert({
+      where: {
+        shop
+      },
+      create: {
+        shop,
+        apiKey
+      },
+      update: {
+        apiKey
+      }
+    });
+    return {
+      ok: true,
+      type: "googleApiKey",
+      action: "saved",
+      result: result2
+    };
+  }
+  if (intent === "deleteGoogleApiKey") {
+    console.log(`[ActiveServices Action] Deleting Google Places API Key for shop=${shop}`);
+    try {
+      await prisma.googlePlacesConfig.delete({
+        where: {
+          shop
+        }
+      });
+    } catch (e) {
+      await prisma.googlePlacesConfig.upsert({
+        where: {
+          shop
+        },
+        create: {
+          shop,
+          apiKey: null
+        },
+        update: {
+          apiKey: null
+        }
+      });
+    }
+    return {
+      ok: true,
+      type: "googleApiKey",
+      action: "deleted"
+    };
+  }
   if (intent === "saveMaxEdits") {
     const maxEditsStr = formData.get("maxEdits");
     const maxEdits = !maxEditsStr || maxEditsStr === "0" || maxEditsStr === "unlimited" ? null : parseInt(maxEditsStr, 10);
@@ -7747,7 +8247,9 @@ const headers$3 = (headersArgs) => {
 const app_activeServices = UNSAFE_withComponentProps(function ActiveServicesPage() {
   const {
     services,
-    timeLimitSettings
+    timeLimitSettings,
+    googleApiKey,
+    initialProducts
   } = useLoaderData();
   return /* @__PURE__ */ jsxs("s-page", {
     heading: "Active Services",
@@ -7756,6 +8258,10 @@ const app_activeServices = UNSAFE_withComponentProps(function ActiveServicesPage
       children: /* @__PURE__ */ jsx("s-paragraph", {
         children: "Manage and monitor all active customer-facing services provided by your Order Edit App. Use the toggles on the right to enable or disable specific functionalities for your store customers."
       })
+    }), /* @__PURE__ */ jsx(ProductTagsSection, {
+      initialProducts
+    }), /* @__PURE__ */ jsx(GoogleApiKeySection, {
+      initialApiKey: googleApiKey
     }), /* @__PURE__ */ jsx(MaxEditsSection, {
       initialMaxEdits: timeLimitSettings.maxEdits
     }), /* @__PURE__ */ jsx(TimeLimitSection, {
@@ -8237,7 +8743,502 @@ function ServiceRow({
     })
   });
 }
-const route28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+function GoogleApiKeySection({
+  initialApiKey
+}) {
+  var _a2, _b;
+  const fetcher = useFetcher();
+  const [apiKey, setApiKey] = useEffectState(initialApiKey || "");
+  const [showKey, setShowKey] = useState(false);
+  const [isSaved, setIsSaved] = useEffectState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [lastAction, setLastAction] = useState(null);
+  useEffect(() => {
+    setApiKey(initialApiKey || "");
+  }, [initialApiKey]);
+  useEffect(() => {
+    var _a3, _b2, _c, _d;
+    if (fetcher.state === "idle" && ((_a3 = fetcher.data) == null ? void 0 : _a3.ok) && ((_b2 = fetcher.data) == null ? void 0 : _b2.type) === "googleApiKey") {
+      setIsSaved(true);
+      const isDeleted = ((_c = fetcher.data) == null ? void 0 : _c.action) === "deleted";
+      setLastAction(isDeleted ? "deleted" : "saved");
+      const msg = isDeleted ? "Google Places API key deleted successfully!" : "Google Places API key saved successfully!";
+      setActionMessage(msg);
+      if (isDeleted) {
+        setApiKey("");
+      }
+      if (typeof window !== "undefined" && ((_d = window.shopify) == null ? void 0 : _d.toast)) {
+        window.shopify.toast.show(msg);
+      }
+      const timer = setTimeout(() => {
+        setIsSaved(false);
+        setLastAction(null);
+      }, 4e3);
+      return () => clearTimeout(timer);
+    }
+  }, [fetcher.state, fetcher.data]);
+  const handleSave = () => {
+    fetcher.submit({
+      intent: "saveGoogleApiKey",
+      googleApiKey: apiKey
+    }, {
+      method: "post"
+    });
+  };
+  const handleDelete = () => {
+    fetcher.submit({
+      intent: "deleteGoogleApiKey"
+    }, {
+      method: "post"
+    });
+  };
+  const isDeleting = fetcher.state !== "idle" && ((_a2 = fetcher.formData) == null ? void 0 : _a2.get("intent")) === "deleteGoogleApiKey";
+  const isConfigured = Boolean(apiKey && apiKey.trim().length > 0 || isDeleting);
+  const showDeleteButton = isConfigured || isDeleting || isSaved && lastAction === "deleted";
+  return /* @__PURE__ */ jsx("s-section", {
+    heading: "Google Places & Location Suggestions",
+    children: /* @__PURE__ */ jsx("s-box", {
+      padding: "large",
+      border: "base",
+      borderRadius: "base",
+      background: "subdued",
+      children: /* @__PURE__ */ jsxs("s-stack", {
+        direction: "block",
+        gap: "large",
+        children: [/* @__PURE__ */ jsxs("s-stack", {
+          direction: "block",
+          gap: "small",
+          children: [/* @__PURE__ */ jsxs("s-stack", {
+            direction: "inline",
+            justifyContent: "space-between",
+            alignItems: "center",
+            children: [/* @__PURE__ */ jsx("s-text", {
+              type: "strong",
+              children: "🔑 Google Places API Key"
+            }), /* @__PURE__ */ jsx("s-badge", {
+              tone: isConfigured && !isDeleting && lastAction !== "deleted" ? "success" : "neutral",
+              children: isConfigured && !isDeleting && lastAction !== "deleted" ? "Active (Autocomplete Enabled)" : "Disabled (No Key)"
+            })]
+          }), /* @__PURE__ */ jsx("s-paragraph", {
+            color: "subdued",
+            children: "Enter your Google Places & Geocoding API Key to enable instant location autocomplete and auto-filling address suggestions for your store customers. If left blank, the location suggestions section will be hidden on storefront address forms."
+          })]
+        }), /* @__PURE__ */ jsx("s-box", {
+          padding: "base",
+          border: "base",
+          borderRadius: "base",
+          background: "surface",
+          children: /* @__PURE__ */ jsxs("s-stack", {
+            direction: "block",
+            gap: "base",
+            children: [/* @__PURE__ */ jsx("s-text", {
+              type: "strong",
+              children: "Merchant API Key"
+            }), /* @__PURE__ */ jsxs("div", {
+              style: {
+                display: "flex",
+                gap: "12px",
+                alignItems: "flex-end"
+              },
+              children: [/* @__PURE__ */ jsxs("div", {
+                style: {
+                  flex: 1,
+                  position: "relative"
+                },
+                children: [/* @__PURE__ */ jsx("s-text", {
+                  color: "subdued",
+                  children: "API Key (Places API & Geocoding API enabled)"
+                }), /* @__PURE__ */ jsx("input", {
+                  type: showKey ? "text" : "password",
+                  value: apiKey,
+                  onChange: (e) => setApiKey(e.target.value),
+                  placeholder: "e.g. AIzaSyD...",
+                  style: {
+                    marginTop: "6px",
+                    padding: "8px 40px 8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #c9cccf",
+                    fontSize: "14px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    fontFamily: "monospace"
+                  }
+                }), /* @__PURE__ */ jsx("button", {
+                  type: "button",
+                  onClick: () => setShowKey(!showKey),
+                  style: {
+                    position: "absolute",
+                    right: "10px",
+                    top: "28px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    color: "#5c5f62"
+                  },
+                  children: showKey ? "Hide" : "Show"
+                })]
+              }), /* @__PURE__ */ jsx("button", {
+                type: "button",
+                onClick: handleSave,
+                style: {
+                  padding: "9px 20px",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: "#008060",
+                  color: "#ffffff",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  height: "36px",
+                  flexShrink: 0
+                },
+                children: fetcher.state !== "idle" && ((_b = fetcher.formData) == null ? void 0 : _b.get("intent")) === "saveGoogleApiKey" ? "Saving..." : "Save Key"
+              }), showDeleteButton && /* @__PURE__ */ jsx("button", {
+                type: "button",
+                onClick: handleDelete,
+                disabled: isDeleting,
+                style: {
+                  padding: "9px 20px",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: "#d82c0d",
+                  color: "#ffffff",
+                  fontWeight: "600",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                  height: "36px",
+                  flexShrink: 0,
+                  opacity: isDeleting ? 0.7 : 1
+                },
+                children: isDeleting ? "Deleting..." : "Delete Key"
+              })]
+            })]
+          })
+        }), isSaved && /* @__PURE__ */ jsx("s-banner", {
+          tone: lastAction === "deleted" ? "critical" : "success",
+          children: actionMessage
+        })]
+      })
+    })
+  });
+}
+function ProductTagsSection({
+  initialProducts
+}) {
+  const [products, setProducts] = useState(initialProducts || []);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [newTagsMap, setNewTagsMap] = useState({});
+  const [bannerInfo, setBannerInfo] = useState(null);
+  const searchFetcher = useFetcher();
+  const tagFetcher = useFetcher();
+  useEffect(() => {
+    var _a2, _b;
+    if (searchFetcher.state === "idle" && ((_a2 = searchFetcher.data) == null ? void 0 : _a2.ok) && ((_b = searchFetcher.data) == null ? void 0 : _b.type) === "searchProducts") {
+      setProducts(searchFetcher.data.products || []);
+      setHasSearched(true);
+    }
+  }, [searchFetcher.state, searchFetcher.data]);
+  useEffect(() => {
+    var _a2, _b;
+    if (tagFetcher.state === "idle" && ((_a2 = tagFetcher.data) == null ? void 0 : _a2.ok) && ((_b = tagFetcher.data) == null ? void 0 : _b.type) === "productTag") {
+      const {
+        action: action2,
+        productId,
+        tag
+      } = tagFetcher.data;
+      setProducts((prev) => prev.map((p) => {
+        if (p.id !== productId) return p;
+        let updatedTags = [...p.tags];
+        if (action2 === "added" && !updatedTags.includes(tag)) {
+          updatedTags.push(tag);
+        } else if (action2 === "removed") {
+          updatedTags = updatedTags.filter((t) => t !== tag);
+        }
+        return {
+          ...p,
+          tags: updatedTags
+        };
+      }));
+      setBannerInfo({
+        msg: action2 === "added" ? `Added tag "${tag}" successfully!` : `Removed tag "${tag}" successfully!`,
+        tone: action2 === "added" ? "success" : "critical"
+      });
+      const timer = setTimeout(() => setBannerInfo(null), 4e3);
+      return () => clearTimeout(timer);
+    }
+  }, [tagFetcher.state, tagFetcher.data]);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setHasSearched(true);
+    searchFetcher.submit({
+      intent: "searchProducts",
+      query: searchQuery
+    }, {
+      method: "post"
+    });
+  };
+  const handleAddTag = (productId, tagToAdd) => {
+    if (!tagToAdd || !tagToAdd.trim()) return;
+    const cleanTag = tagToAdd.trim();
+    tagFetcher.submit({
+      intent: "addProductTag",
+      productId,
+      tag: cleanTag
+    }, {
+      method: "post"
+    });
+    setNewTagsMap((prev) => ({
+      ...prev,
+      [productId]: ""
+    }));
+  };
+  const handleRemoveTag = (productId, tagToRemove) => {
+    tagFetcher.submit({
+      intent: "removeProductTag",
+      productId,
+      tag: tagToRemove
+    }, {
+      method: "post"
+    });
+  };
+  return /* @__PURE__ */ jsx("s-section", {
+    heading: "Product Tags & Upsell Management",
+    children: /* @__PURE__ */ jsx("s-box", {
+      padding: "large",
+      border: "base",
+      borderRadius: "base",
+      background: "subdued",
+      children: /* @__PURE__ */ jsxs("s-stack", {
+        direction: "block",
+        gap: "large",
+        children: [/* @__PURE__ */ jsxs("s-stack", {
+          direction: "block",
+          gap: "small",
+          children: [/* @__PURE__ */ jsx("s-text", {
+            type: "strong",
+            children: "🏷️ Configure Product Tags for Upsell Recommendations"
+          }), /* @__PURE__ */ jsx("s-paragraph", {
+            color: "subdued",
+            children: "Organize your product catalog by managing product tags. The OrderEase Upsell feature automatically pairs items in a customer's order tagged with [tag] with recommendation products tagged with [tag]-upshell."
+          })]
+        }), bannerInfo ? /* @__PURE__ */ jsx("s-banner", {
+          tone: bannerInfo.tone,
+          children: bannerInfo.msg
+        }) : null, /* @__PURE__ */ jsxs("form", {
+          onSubmit: handleSearch,
+          style: {
+            display: "flex",
+            gap: "10px"
+          },
+          children: [/* @__PURE__ */ jsx("input", {
+            type: "text",
+            placeholder: "Search products by title or tag...",
+            value: searchQuery,
+            onChange: (e) => setSearchQuery(e.target.value),
+            style: {
+              flex: 1,
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid #c9cccf",
+              fontSize: "14px"
+            }
+          }), /* @__PURE__ */ jsx("button", {
+            type: "submit",
+            style: {
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: "none",
+              backgroundColor: "#008060",
+              color: "#ffffff",
+              fontWeight: "600",
+              cursor: "pointer"
+            },
+            children: searchFetcher.state !== "idle" ? "Searching..." : "Search Products"
+          })]
+        }), /* @__PURE__ */ jsx("s-stack", {
+          direction: "block",
+          gap: "base",
+          children: searchFetcher.state !== "idle" ? /* @__PURE__ */ jsx("s-box", {
+            padding: "base",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsx("s-paragraph", {
+              color: "subdued",
+              children: "⏳ Searching products..."
+            })
+          }) : !hasSearched ? /* @__PURE__ */ jsx("s-box", {
+            padding: "base",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsx("s-paragraph", {
+              color: "subdued",
+              children: "🔍 Search for a product by title or tag above to view and manage its tags."
+            })
+          }) : products.length === 0 ? /* @__PURE__ */ jsx("s-box", {
+            padding: "base",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsx("s-paragraph", {
+              color: "subdued",
+              children: "No products found. Try adjusting your search query."
+            })
+          }) : products.map((prod) => {
+            const currentNewTag = newTagsMap[prod.id] || "";
+            return /* @__PURE__ */ jsx("s-box", {
+              padding: "base",
+              border: "base",
+              borderRadius: "base",
+              children: /* @__PURE__ */ jsxs("s-grid", {
+                gridTemplateColumns: "auto 1fr",
+                gap: "base",
+                alignItems: "start",
+                children: [/* @__PURE__ */ jsx("div", {
+                  style: {
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    backgroundColor: "#f1f2f3",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #e1e3e5"
+                  },
+                  children: prod.imageUrl ? /* @__PURE__ */ jsx("img", {
+                    src: prod.imageUrl,
+                    alt: prod.title,
+                    style: {
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover"
+                    }
+                  }) : /* @__PURE__ */ jsx("span", {
+                    style: {
+                      fontSize: "20px"
+                    },
+                    children: "📦"
+                  })
+                }), /* @__PURE__ */ jsxs("s-stack", {
+                  direction: "block",
+                  gap: "small",
+                  children: [/* @__PURE__ */ jsx("s-text", {
+                    type: "strong",
+                    children: prod.title
+                  }), /* @__PURE__ */ jsx("div", {
+                    style: {
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "6px",
+                      alignItems: "center"
+                    },
+                    children: prod.tags && prod.tags.length > 0 ? prod.tags.map((tag) => {
+                      const isUpsellTag = tag.endsWith("-upshell");
+                      return /* @__PURE__ */ jsxs("span", {
+                        style: {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          backgroundColor: isUpsellTag ? "#eaf4f0" : "#f1f2f3",
+                          color: isUpsellTag ? "#004c3f" : "#202223",
+                          border: isUpsellTag ? "1px solid #95c9b4" : "1px solid #c9cccf",
+                          fontSize: "12px",
+                          fontWeight: isUpsellTag ? "600" : "500"
+                        },
+                        children: [isUpsellTag ? `⚡ ${tag}` : tag, /* @__PURE__ */ jsx("button", {
+                          type: "button",
+                          onClick: () => handleRemoveTag(prod.id, tag),
+                          style: {
+                            background: "none",
+                            border: "none",
+                            color: "#5c5f62",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            padding: "0 2px",
+                            lineHeight: 1
+                          },
+                          title: `Remove tag ${tag}`,
+                          children: "×"
+                        })]
+                      }, tag);
+                    }) : /* @__PURE__ */ jsx("s-text", {
+                      color: "subdued",
+                      children: "No tags assigned"
+                    })
+                  }), /* @__PURE__ */ jsxs("div", {
+                    style: {
+                      display: "flex",
+                      gap: "8px",
+                      marginTop: "4px",
+                      flexWrap: "wrap"
+                    },
+                    children: [/* @__PURE__ */ jsx("input", {
+                      type: "text",
+                      placeholder: "Add tag (e.g. Summer or Summer-upshell)...",
+                      value: currentNewTag,
+                      onChange: (e) => setNewTagsMap((prev) => ({
+                        ...prev,
+                        [prod.id]: e.target.value
+                      })),
+                      onKeyDown: (e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag(prod.id, currentNewTag);
+                        }
+                      },
+                      style: {
+                        flex: 1,
+                        minWidth: "180px",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #c9cccf",
+                        fontSize: "13px"
+                      }
+                    }), /* @__PURE__ */ jsx("button", {
+                      type: "button",
+                      onClick: () => handleAddTag(prod.id, currentNewTag),
+                      disabled: !currentNewTag.trim(),
+                      style: {
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        border: "none",
+                        backgroundColor: "#008060",
+                        color: "#ffffff",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        cursor: currentNewTag.trim() ? "pointer" : "not-allowed",
+                        opacity: currentNewTag.trim() ? 1 : 0.6
+                      },
+                      children: "+ Tag"
+                    }), currentNewTag.trim() && !currentNewTag.trim().endsWith("-upshell") ? /* @__PURE__ */ jsxs("button", {
+                      type: "button",
+                      onClick: () => handleAddTag(prod.id, `${currentNewTag.trim()}-upshell`),
+                      style: {
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #008060",
+                        backgroundColor: "#eaf4f0",
+                        color: "#004c3f",
+                        fontSize: "13px",
+                        fontWeight: "600",
+                        cursor: "pointer"
+                      },
+                      children: ["+ Quick Add ", currentNewTag.trim(), "-upshell"]
+                    }) : null]
+                  })]
+                })]
+              })
+            }, prod.id);
+          })
+        })]
+      })
+    })
+  });
+}
+const route29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action: action$1,
   default: app_activeServices,
@@ -8279,7 +9280,7 @@ const app_additional = UNSAFE_withComponentProps(function AdditionalPage() {
     })]
   });
 });
-const route29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: app_additional
 }, Symbol.toStringTag, { value: "Module" }));
@@ -8621,7 +9622,7 @@ const app_insights = UNSAFE_withComponentProps(function InsightsPage() {
     })]
   });
 });
-const route30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: app_insights,
   headers: headers$2,
@@ -8927,7 +9928,7 @@ const app__index = UNSAFE_withComponentProps(function Index() {
 const headers$1 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-const route31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   action,
   default: app__index,
@@ -9240,7 +10241,7 @@ const app_help = UNSAFE_withComponentProps(function HelpPage() {
                 })]
               }), /* @__PURE__ */ jsx("s-paragraph", {
                 color: "subdued",
-                children: "Displays smart product recommendations directly inside the order edit module, prompting customers to add complimentary products to their pending order."
+                children: "Displays smart product recommendations directly inside the order edit module. Recommendation rules are driven by tag pairing: items tagged with [tag] suggest catalog products tagged with [tag]-upshell."
               })]
             })
           })
@@ -9522,6 +10523,128 @@ const app_help = UNSAFE_withComponentProps(function HelpPage() {
             })
           })
         })
+      }), /* @__PURE__ */ jsx("s-section", {
+        heading: "4. Google Places & Location Autocomplete Configuration",
+        children: /* @__PURE__ */ jsx("s-box", {
+          padding: "large",
+          border: "base",
+          borderRadius: "base",
+          children: /* @__PURE__ */ jsxs("s-stack", {
+            direction: "block",
+            gap: "base",
+            children: [/* @__PURE__ */ jsx("s-text", {
+              type: "strong",
+              children: "Enabling Address Autocomplete for Storefront Customers"
+            }), /* @__PURE__ */ jsx("s-paragraph", {
+              color: "subdued",
+              children: "OrderEase allows merchants to connect their own Google Places API Key on the Active Services page. Once configured, customers editing their shipping address will get real-time address suggestions and auto-complete dropdowns."
+            }), /* @__PURE__ */ jsxs("s-grid", {
+              gridTemplateColumns: "1fr 1fr",
+              gap: "large",
+              children: [/* @__PURE__ */ jsxs("s-stack", {
+                direction: "block",
+                gap: "small",
+                children: [/* @__PURE__ */ jsx("s-text", {
+                  type: "strong",
+                  children: "Active API Key Setup"
+                }), /* @__PURE__ */ jsxs("s-paragraph", {
+                  color: "subdued",
+                  children: ["Enter your Google API Key under the ", /* @__PURE__ */ jsx("strong", {
+                    children: "Google Places & Location Suggestions"
+                  }), " section on the Active Services page and click ", /* @__PURE__ */ jsx("strong", {
+                    children: "Save Key"
+                  }), ". The key is securely stored per shop."]
+                })]
+              }), /* @__PURE__ */ jsxs("s-stack", {
+                direction: "block",
+                gap: "small",
+                children: [/* @__PURE__ */ jsx("s-text", {
+                  type: "strong",
+                  children: "Removing or Clearing Key"
+                }), /* @__PURE__ */ jsxs("s-paragraph", {
+                  color: "subdued",
+                  children: ["To disable autocomplete, click the red ", /* @__PURE__ */ jsx("strong", {
+                    children: "Delete Key"
+                  }), " button. The key will be deleted from your database, and storefront forms will automatically hide location suggestions without causing errors."]
+                })]
+              })]
+            }), /* @__PURE__ */ jsxs("s-banner", {
+              tone: "info",
+              children: [/* @__PURE__ */ jsx("strong", {
+                children: "Google Cloud Setup Requirement:"
+              }), " Ensure both ", /* @__PURE__ */ jsx("strong", {
+                children: "Places API"
+              }), " (or Places API New) and ", /* @__PURE__ */ jsx("strong", {
+                children: "Geocoding API"
+              }), " are enabled in your Google Cloud Console project, and that key restrictions permit these services."]
+            })]
+          })
+        })
+      }), /* @__PURE__ */ jsx("s-section", {
+        heading: "5. Product Tags & Upsell Management Configuration",
+        children: /* @__PURE__ */ jsx("s-box", {
+          padding: "large",
+          border: "base",
+          borderRadius: "base",
+          children: /* @__PURE__ */ jsxs("s-stack", {
+            direction: "block",
+            gap: "base",
+            children: [/* @__PURE__ */ jsx("s-text", {
+              type: "strong",
+              children: "Configuring Tag-Based Product Recommendations"
+            }), /* @__PURE__ */ jsxs("s-paragraph", {
+              color: "subdued",
+              children: ["OrderEase features an automated tag-based recommendation engine. Items in a customer's order tagged with ", /* @__PURE__ */ jsx("strong", {
+                children: "[tag]"
+              }), " (e.g. ", /* @__PURE__ */ jsx("code", {
+                children: "Summer"
+              }), ") will trigger smart upsell recommendations for store products tagged with ", /* @__PURE__ */ jsx("strong", {
+                children: "[tag]-upshell"
+              }), " (e.g. ", /* @__PURE__ */ jsx("code", {
+                children: "Summer-upshell"
+              }), ")."]
+            }), /* @__PURE__ */ jsxs("s-grid", {
+              gridTemplateColumns: "1fr 1fr",
+              gap: "large",
+              children: [/* @__PURE__ */ jsxs("s-stack", {
+                direction: "block",
+                gap: "small",
+                children: [/* @__PURE__ */ jsx("s-text", {
+                  type: "strong",
+                  children: "Searching & Viewing Product Tags"
+                }), /* @__PURE__ */ jsxs("s-paragraph", {
+                  color: "subdued",
+                  children: ["On the ", /* @__PURE__ */ jsx("strong", {
+                    children: "Active Services"
+                  }), " page, scroll to ", /* @__PURE__ */ jsx("strong", {
+                    children: "Product Tags & Upsell Management"
+                  }), ". Use the search input to find products by title or tag. Active ", /* @__PURE__ */ jsx("code", {
+                    children: "-upshell"
+                  }), " tags are highlighted with a green badge and ⚡ icon."]
+                })]
+              }), /* @__PURE__ */ jsxs("s-stack", {
+                direction: "block",
+                gap: "small",
+                children: [/* @__PURE__ */ jsx("s-text", {
+                  type: "strong",
+                  children: "Adding & Removing Tags"
+                }), /* @__PURE__ */ jsxs("s-paragraph", {
+                  color: "subdued",
+                  children: ["Type any tag into the product input field and click ", /* @__PURE__ */ jsx("strong", {
+                    children: "+ Tag"
+                  }), ", or use the ", /* @__PURE__ */ jsx("strong", {
+                    children: "+ Quick Add [tag]-upshell"
+                  }), " shortcut. Click the ", /* @__PURE__ */ jsx("strong", {
+                    children: "×"
+                  }), " on any tag badge to instantly remove it."]
+                })]
+              })]
+            }), /* @__PURE__ */ jsx("s-banner", {
+              tone: "success",
+              children: "Product tags are updated in real-time directly on your store's Shopify Admin catalog."
+            })]
+          })
+        })
       })]
     }), activeTab === "faq" && /* @__PURE__ */ jsx("s-stack", {
       direction: "block",
@@ -9532,6 +10655,121 @@ const app_help = UNSAFE_withComponentProps(function HelpPage() {
           direction: "block",
           gap: "base",
           children: [/* @__PURE__ */ jsx("s-box", {
+            padding: "large",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsxs("s-stack", {
+              direction: "block",
+              gap: "small",
+              children: [/* @__PURE__ */ jsx("s-text", {
+                type: "strong",
+                children: "Q: How does the Product Upsell tag pairing system work?"
+              }), /* @__PURE__ */ jsxs("s-paragraph", {
+                color: "subdued",
+                children: ["OrderEase checks the product tags of active items in a customer's order. For each tag ", /* @__PURE__ */ jsx("strong", {
+                  children: "X"
+                }), " on an ordered item, the app searches your catalog for products tagged with ", /* @__PURE__ */ jsx("strong", {
+                  children: "X-upshell"
+                }), " and presents them as recommended additions in the order status / edit screen."]
+              })]
+            })
+          }), /* @__PURE__ */ jsx("s-box", {
+            padding: "large",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsxs("s-stack", {
+              direction: "block",
+              gap: "small",
+              children: [/* @__PURE__ */ jsx("s-text", {
+                type: "strong",
+                children: "Q: How do I manage upsell tags for my products?"
+              }), /* @__PURE__ */ jsxs("s-paragraph", {
+                color: "subdued",
+                children: ["1. Navigate to ", /* @__PURE__ */ jsx("strong", {
+                  children: "Active Services"
+                }), " and scroll down to ", /* @__PURE__ */ jsx("strong", {
+                  children: "Product Tags & Upsell Management"
+                }), ".", /* @__PURE__ */ jsx("br", {}), "2. Search for any product by title or tag.", /* @__PURE__ */ jsx("br", {}), "3. Type a tag into the product's tag field and click ", /* @__PURE__ */ jsx("strong", {
+                  children: "+ Tag"
+                }), " or ", /* @__PURE__ */ jsx("strong", {
+                  children: "+ Quick Add [tag]-upshell"
+                }), ".", /* @__PURE__ */ jsx("br", {}), "4. To remove a tag, click the ", /* @__PURE__ */ jsx("strong", {
+                  children: "×"
+                }), " button on the tag badge."]
+              })]
+            })
+          }), /* @__PURE__ */ jsx("s-box", {
+            padding: "large",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsxs("s-stack", {
+              direction: "block",
+              gap: "small",
+              children: [/* @__PURE__ */ jsx("s-text", {
+                type: "strong",
+                children: "Q: How do I set up Google Places Location Suggestions for customer address edits?"
+              }), /* @__PURE__ */ jsxs("s-paragraph", {
+                color: "subdued",
+                children: ["1. Go to the Active Services page and scroll to ", /* @__PURE__ */ jsx("strong", {
+                  children: "Google Places & Location Suggestions"
+                }), ".", /* @__PURE__ */ jsx("br", {}), "2. Paste your Google Places API Key into the field and click ", /* @__PURE__ */ jsx("strong", {
+                  children: "Save Key"
+                }), ".", /* @__PURE__ */ jsx("br", {}), "3. Make sure in your Google Cloud Console that ", /* @__PURE__ */ jsx("strong", {
+                  children: "Places API"
+                }), " (or Places API New) and ", /* @__PURE__ */ jsx("strong", {
+                  children: "Geocoding API"
+                }), " are enabled for your project.", /* @__PURE__ */ jsx("br", {}), "4. Once saved, customers editing shipping addresses on Checkout or Customer Account pages will get instant location autocomplete suggestions."]
+              })]
+            })
+          }), /* @__PURE__ */ jsx("s-box", {
+            padding: "large",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsxs("s-stack", {
+              direction: "block",
+              gap: "small",
+              children: [/* @__PURE__ */ jsx("s-text", {
+                type: "strong",
+                children: "Q: Why are location suggestions returning errors or REQUEST_DENIED?"
+              }), /* @__PURE__ */ jsxs("s-paragraph", {
+                color: "subdued",
+                children: ["If location suggestions do not appear, check the following in your Google Cloud Console:", /* @__PURE__ */ jsx("br", {}), "• ", /* @__PURE__ */ jsx("strong", {
+                  children: "API Enablement:"
+                }), " Verify that ", /* @__PURE__ */ jsx("em", {
+                  children: "Places API"
+                }), " (or ", /* @__PURE__ */ jsx("em", {
+                  children: "Places API New"
+                }), ") is turned ON under Google Cloud -> APIs & Services -> Library.", /* @__PURE__ */ jsx("br", {}), "• ", /* @__PURE__ */ jsx("strong", {
+                  children: "API Key Restrictions:"
+                }), " Under APIs & Services -> Credentials, check your API Key. Set API restrictions to ", /* @__PURE__ */ jsx("em", {
+                  children: "Don't restrict key"
+                }), " or ensure ", /* @__PURE__ */ jsx("em", {
+                  children: "Places API"
+                }), " is explicitly selected.", /* @__PURE__ */ jsx("br", {}), "• ", /* @__PURE__ */ jsx("strong", {
+                  children: "Billing Account:"
+                }), " Ensure your Google Cloud project has an active billing account linked."]
+              })]
+            })
+          }), /* @__PURE__ */ jsx("s-box", {
+            padding: "large",
+            border: "base",
+            borderRadius: "base",
+            children: /* @__PURE__ */ jsxs("s-stack", {
+              direction: "block",
+              gap: "small",
+              children: [/* @__PURE__ */ jsx("s-text", {
+                type: "strong",
+                children: "Q: How do I remove my Google Places API Key?"
+              }), /* @__PURE__ */ jsxs("s-paragraph", {
+                color: "subdued",
+                children: ["Go to the Active Services page under ", /* @__PURE__ */ jsx("strong", {
+                  children: "Google Places & Location Suggestions"
+                }), " and click the red ", /* @__PURE__ */ jsx("strong", {
+                  children: "Delete Key"
+                }), " button. This clears your API key from the database. When no key exists, location suggestions are safely hidden on customer address forms."]
+              })]
+            })
+          }), /* @__PURE__ */ jsx("s-box", {
             padding: "large",
             border: "base",
             borderRadius: "base",
@@ -9633,13 +10871,13 @@ const app_help = UNSAFE_withComponentProps(function HelpPage() {
     })]
   });
 });
-const route32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: app_help,
   headers,
   loader
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-D4gpF5ER.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/root-Bvta0r3e.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.update-quantity": { "id": "routes/api.order-edit.update-quantity", "parentId": "root", "path": "api/order-edit/update-quantity", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.update-quantity-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.change-variant": { "id": "routes/api.order-edit.change-variant", "parentId": "root", "path": "api/order-edit/change-variant", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.change-variant-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.add-product": { "id": "routes/api.order-edit.add-product", "parentId": "root", "path": "api/order-edit/add-product", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.add-product-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.scopes_update": { "id": "routes/webhooks.app.scopes_update", "parentId": "root", "path": "webhooks/app/scopes_update", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.scopes_update-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.get-order": { "id": "routes/api.order-edit.get-order", "parentId": "root", "path": "api/order-edit/get-order", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.get-order-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.uninstalled": { "id": "routes/webhooks.app.uninstalled", "parentId": "root", "path": "webhooks/app/uninstalled", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.uninstalled-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.upsell-tags": { "id": "routes/api.order.upsell-tags", "parentId": "root", "path": "api/order/upsell-tags", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.upsell-tags-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.service-settings": { "id": "routes/api.service-settings", "parentId": "root", "path": "api/service-settings", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.service-settings-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount2": { "id": "routes/api.order.discount2", "parentId": "root", "path": "api/order/discount2", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount2-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount3": { "id": "routes/api.order.discount3", "parentId": "root", "path": "api/order/discount3", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount3-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount4": { "id": "routes/api.order.discount4", "parentId": "root", "path": "api/order/discount4", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount4-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount5": { "id": "routes/api.order.discount5", "parentId": "root", "path": "api/order/discount5", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount5-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount6": { "id": "routes/api.order.discount6", "parentId": "root", "path": "api/order/discount6", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount6-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount7": { "id": "routes/api.order.discount7", "parentId": "root", "path": "api/order/discount7", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount7-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount8": { "id": "routes/api.order.discount8", "parentId": "root", "path": "api/order/discount8", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount8-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/public.invoice-link": { "id": "routes/public.invoice-link", "parentId": "root", "path": "public/invoice-link", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/public.invoice-link-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount": { "id": "routes/api.order.discount", "parentId": "root", "path": "api/order/discount", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.shipping": { "id": "routes/api.order.shipping", "parentId": "root", "path": "api/order/shipping", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.shipping-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.address": { "id": "routes/api.order.address", "parentId": "root", "path": "api/order/address", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.address-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.contact": { "id": "routes/api.order.contact", "parentId": "root", "path": "api/order/contact", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.contact-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.invoice": { "id": "routes/api.order.invoice", "parentId": "root", "path": "api/order/invoice", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.invoice-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.cancel": { "id": "routes/api.order.cancel", "parentId": "root", "path": "api/order/cancel", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.cancel-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.note": { "id": "routes/api.order.note", "parentId": "root", "path": "api/order/note", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.note-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.login": { "id": "routes/auth.login", "parentId": "root", "path": "auth/login", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-_An4tzd_.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-BI6pnsbT.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": ["/assets/route-Xpdx9QZl.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.$": { "id": "routes/auth.$", "parentId": "root", "path": "auth/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/auth._-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app": { "id": "routes/app", "parentId": "root", "path": "app", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/app-DFnQoY-M.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.active-services": { "id": "routes/app.active-services", "parentId": "routes/app", "path": "active-services", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.active-services-yFfFDhYu.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.additional": { "id": "routes/app.additional", "parentId": "routes/app", "path": "additional", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.additional-CO-TBlJg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.insights": { "id": "routes/app.insights", "parentId": "routes/app", "path": "insights", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.insights-DebMz80N.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app._index": { "id": "routes/app._index", "parentId": "routes/app", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app._index-BWKGwpOi.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.help": { "id": "routes/app.help", "parentId": "routes/app", "path": "help", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.help-DwcACSP9.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-1a4788fe.js", "version": "1a4788fe", "sri": void 0 };
+const serverManifest = { "entry": { "module": "/assets/entry.client-D4gpF5ER.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/root-Bvta0r3e.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.update-quantity": { "id": "routes/api.order-edit.update-quantity", "parentId": "root", "path": "api/order-edit/update-quantity", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.update-quantity-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.change-variant": { "id": "routes/api.order-edit.change-variant", "parentId": "root", "path": "api/order-edit/change-variant", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.change-variant-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.add-product": { "id": "routes/api.order-edit.add-product", "parentId": "root", "path": "api/order-edit/add-product", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.add-product-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.scopes_update": { "id": "routes/webhooks.app.scopes_update", "parentId": "root", "path": "webhooks/app/scopes_update", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.scopes_update-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.location-suggestions": { "id": "routes/api.location-suggestions", "parentId": "root", "path": "api/location-suggestions", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.location-suggestions-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.get-order": { "id": "routes/api.order-edit.get-order", "parentId": "root", "path": "api/order-edit/get-order", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.get-order-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.uninstalled": { "id": "routes/webhooks.app.uninstalled", "parentId": "root", "path": "webhooks/app/uninstalled", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.uninstalled-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.upsell-tags": { "id": "routes/api.order.upsell-tags", "parentId": "root", "path": "api/order/upsell-tags", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.upsell-tags-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.service-settings": { "id": "routes/api.service-settings", "parentId": "root", "path": "api/service-settings", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.service-settings-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount2": { "id": "routes/api.order.discount2", "parentId": "root", "path": "api/order/discount2", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount2-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount3": { "id": "routes/api.order.discount3", "parentId": "root", "path": "api/order/discount3", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount3-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount4": { "id": "routes/api.order.discount4", "parentId": "root", "path": "api/order/discount4", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount4-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount5": { "id": "routes/api.order.discount5", "parentId": "root", "path": "api/order/discount5", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount5-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount6": { "id": "routes/api.order.discount6", "parentId": "root", "path": "api/order/discount6", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount6-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount7": { "id": "routes/api.order.discount7", "parentId": "root", "path": "api/order/discount7", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount7-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount8": { "id": "routes/api.order.discount8", "parentId": "root", "path": "api/order/discount8", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount8-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/public.invoice-link": { "id": "routes/public.invoice-link", "parentId": "root", "path": "public/invoice-link", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/public.invoice-link-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount": { "id": "routes/api.order.discount", "parentId": "root", "path": "api/order/discount", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.shipping": { "id": "routes/api.order.shipping", "parentId": "root", "path": "api/order/shipping", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.shipping-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.address": { "id": "routes/api.order.address", "parentId": "root", "path": "api/order/address", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.address-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.contact": { "id": "routes/api.order.contact", "parentId": "root", "path": "api/order/contact", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.contact-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.invoice": { "id": "routes/api.order.invoice", "parentId": "root", "path": "api/order/invoice", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.invoice-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.cancel": { "id": "routes/api.order.cancel", "parentId": "root", "path": "api/order/cancel", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.cancel-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.note": { "id": "routes/api.order.note", "parentId": "root", "path": "api/order/note", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.note-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.login": { "id": "routes/auth.login", "parentId": "root", "path": "auth/login", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-_An4tzd_.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-BI6pnsbT.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": ["/assets/route-Xpdx9QZl.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.$": { "id": "routes/auth.$", "parentId": "root", "path": "auth/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/auth._-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app": { "id": "routes/app", "parentId": "root", "path": "app", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/app-DFnQoY-M.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.active-services": { "id": "routes/app.active-services", "parentId": "routes/app", "path": "active-services", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.active-services-BXDmDLyg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.additional": { "id": "routes/app.additional", "parentId": "routes/app", "path": "additional", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.additional-CO-TBlJg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.insights": { "id": "routes/app.insights", "parentId": "routes/app", "path": "insights", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.insights-DebMz80N.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app._index": { "id": "routes/app._index", "parentId": "routes/app", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app._index-BWKGwpOi.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.help": { "id": "routes/app.help", "parentId": "routes/app", "path": "help", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.help-OAOZK69q.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-d9c9cf94.js", "version": "d9c9cf94", "sri": void 0 };
 const assetsBuildDirectory = "build/client";
 const basename = "/";
 const future = { "unstable_optimizeDeps": false, "v8_passThroughRequests": false, "v8_trailingSlashAwareDataRequests": false, "unstable_previewServerPrerendering": false, "v8_middleware": false, "v8_splitRouteModules": false, "v8_viteEnvironmentApi": false };
@@ -9690,13 +10928,21 @@ const routes = {
     caseSensitive: void 0,
     module: route4
   },
+  "routes/api.location-suggestions": {
+    id: "routes/api.location-suggestions",
+    parentId: "root",
+    path: "api/location-suggestions",
+    index: void 0,
+    caseSensitive: void 0,
+    module: route5
+  },
   "routes/api.order-edit.get-order": {
     id: "routes/api.order-edit.get-order",
     parentId: "root",
     path: "api/order-edit/get-order",
     index: void 0,
     caseSensitive: void 0,
-    module: route5
+    module: route6
   },
   "routes/webhooks.app.uninstalled": {
     id: "routes/webhooks.app.uninstalled",
@@ -9704,7 +10950,7 @@ const routes = {
     path: "webhooks/app/uninstalled",
     index: void 0,
     caseSensitive: void 0,
-    module: route6
+    module: route7
   },
   "routes/api.order.upsell-tags": {
     id: "routes/api.order.upsell-tags",
@@ -9712,7 +10958,7 @@ const routes = {
     path: "api/order/upsell-tags",
     index: void 0,
     caseSensitive: void 0,
-    module: route7
+    module: route8
   },
   "routes/api.service-settings": {
     id: "routes/api.service-settings",
@@ -9720,7 +10966,7 @@ const routes = {
     path: "api/service-settings",
     index: void 0,
     caseSensitive: void 0,
-    module: route8
+    module: route9
   },
   "routes/api.order.discount2": {
     id: "routes/api.order.discount2",
@@ -9728,7 +10974,7 @@ const routes = {
     path: "api/order/discount2",
     index: void 0,
     caseSensitive: void 0,
-    module: route9
+    module: route10
   },
   "routes/api.order.discount3": {
     id: "routes/api.order.discount3",
@@ -9736,7 +10982,7 @@ const routes = {
     path: "api/order/discount3",
     index: void 0,
     caseSensitive: void 0,
-    module: route10
+    module: route11
   },
   "routes/api.order.discount4": {
     id: "routes/api.order.discount4",
@@ -9744,7 +10990,7 @@ const routes = {
     path: "api/order/discount4",
     index: void 0,
     caseSensitive: void 0,
-    module: route11
+    module: route12
   },
   "routes/api.order.discount5": {
     id: "routes/api.order.discount5",
@@ -9752,7 +10998,7 @@ const routes = {
     path: "api/order/discount5",
     index: void 0,
     caseSensitive: void 0,
-    module: route12
+    module: route13
   },
   "routes/api.order.discount6": {
     id: "routes/api.order.discount6",
@@ -9760,7 +11006,7 @@ const routes = {
     path: "api/order/discount6",
     index: void 0,
     caseSensitive: void 0,
-    module: route13
+    module: route14
   },
   "routes/api.order.discount7": {
     id: "routes/api.order.discount7",
@@ -9768,7 +11014,7 @@ const routes = {
     path: "api/order/discount7",
     index: void 0,
     caseSensitive: void 0,
-    module: route14
+    module: route15
   },
   "routes/api.order.discount8": {
     id: "routes/api.order.discount8",
@@ -9776,7 +11022,7 @@ const routes = {
     path: "api/order/discount8",
     index: void 0,
     caseSensitive: void 0,
-    module: route15
+    module: route16
   },
   "routes/public.invoice-link": {
     id: "routes/public.invoice-link",
@@ -9784,7 +11030,7 @@ const routes = {
     path: "public/invoice-link",
     index: void 0,
     caseSensitive: void 0,
-    module: route16
+    module: route17
   },
   "routes/api.order.discount": {
     id: "routes/api.order.discount",
@@ -9792,7 +11038,7 @@ const routes = {
     path: "api/order/discount",
     index: void 0,
     caseSensitive: void 0,
-    module: route17
+    module: route18
   },
   "routes/api.order.shipping": {
     id: "routes/api.order.shipping",
@@ -9800,7 +11046,7 @@ const routes = {
     path: "api/order/shipping",
     index: void 0,
     caseSensitive: void 0,
-    module: route18
+    module: route19
   },
   "routes/api.order.address": {
     id: "routes/api.order.address",
@@ -9808,7 +11054,7 @@ const routes = {
     path: "api/order/address",
     index: void 0,
     caseSensitive: void 0,
-    module: route19
+    module: route20
   },
   "routes/api.order.contact": {
     id: "routes/api.order.contact",
@@ -9816,7 +11062,7 @@ const routes = {
     path: "api/order/contact",
     index: void 0,
     caseSensitive: void 0,
-    module: route20
+    module: route21
   },
   "routes/api.order.invoice": {
     id: "routes/api.order.invoice",
@@ -9824,7 +11070,7 @@ const routes = {
     path: "api/order/invoice",
     index: void 0,
     caseSensitive: void 0,
-    module: route21
+    module: route22
   },
   "routes/api.order.cancel": {
     id: "routes/api.order.cancel",
@@ -9832,7 +11078,7 @@ const routes = {
     path: "api/order/cancel",
     index: void 0,
     caseSensitive: void 0,
-    module: route22
+    module: route23
   },
   "routes/api.order.note": {
     id: "routes/api.order.note",
@@ -9840,7 +11086,7 @@ const routes = {
     path: "api/order/note",
     index: void 0,
     caseSensitive: void 0,
-    module: route23
+    module: route24
   },
   "routes/auth.login": {
     id: "routes/auth.login",
@@ -9848,7 +11094,7 @@ const routes = {
     path: "auth/login",
     index: void 0,
     caseSensitive: void 0,
-    module: route24
+    module: route25
   },
   "routes/_index": {
     id: "routes/_index",
@@ -9856,7 +11102,7 @@ const routes = {
     path: void 0,
     index: true,
     caseSensitive: void 0,
-    module: route25
+    module: route26
   },
   "routes/auth.$": {
     id: "routes/auth.$",
@@ -9864,7 +11110,7 @@ const routes = {
     path: "auth/*",
     index: void 0,
     caseSensitive: void 0,
-    module: route26
+    module: route27
   },
   "routes/app": {
     id: "routes/app",
@@ -9872,7 +11118,7 @@ const routes = {
     path: "app",
     index: void 0,
     caseSensitive: void 0,
-    module: route27
+    module: route28
   },
   "routes/app.active-services": {
     id: "routes/app.active-services",
@@ -9880,7 +11126,7 @@ const routes = {
     path: "active-services",
     index: void 0,
     caseSensitive: void 0,
-    module: route28
+    module: route29
   },
   "routes/app.additional": {
     id: "routes/app.additional",
@@ -9888,7 +11134,7 @@ const routes = {
     path: "additional",
     index: void 0,
     caseSensitive: void 0,
-    module: route29
+    module: route30
   },
   "routes/app.insights": {
     id: "routes/app.insights",
@@ -9896,7 +11142,7 @@ const routes = {
     path: "insights",
     index: void 0,
     caseSensitive: void 0,
-    module: route30
+    module: route31
   },
   "routes/app._index": {
     id: "routes/app._index",
@@ -9904,7 +11150,7 @@ const routes = {
     path: void 0,
     index: true,
     caseSensitive: void 0,
-    module: route31
+    module: route32
   },
   "routes/app.help": {
     id: "routes/app.help",
@@ -9912,7 +11158,7 @@ const routes = {
     path: "help",
     index: void 0,
     caseSensitive: void 0,
-    module: route32
+    module: route33
   }
 };
 const allowedActionOrigins = false;
