@@ -106,134 +106,6 @@ function SectionHeader({ title, description }) {
   );
 }
 
-function getSectionElement(sectionId) {
-  if (typeof document === 'undefined' || !document || !sectionId) return null;
-
-  if (typeof document.querySelector === 'function') {
-    try {
-      const el = document.querySelector('#' + sectionId);
-      if (el) return el;
-    } catch (e) {}
-  }
-
-  if (typeof document.getElementById === 'function') {
-    try {
-      const el = document.getElementById(sectionId);
-      if (el) return el;
-    } catch (e) {}
-  }
-
-  return null;
-}
-
-function QuickNavigation() {
-  const handleNavigate = (e, sectionId) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-
-    try {
-      const url = typeof window !== 'undefined' && window?.location?.href;
-      const region_country = url ? url.split("/")?.[1] : '';
-
-      const orderID = shopify?.order?.value?.id;
-      const numberOrderId = orderID ? orderID.split("/")[4] : '';
-    
-      const orderStatusPath = `shopify:customer-account/orders/${numberOrderId}${region_country}`;
-
-      if (shopify && shopify.navigation && typeof shopify.navigation.navigate === 'function') {
-        shopify.navigation.navigate(`${orderStatusPath}#${sectionId}`);
-      }
-    } catch (err) {}
-
-    // Scroll to target section element safely
-    const element = getSectionElement(sectionId);
-    if (element && typeof element.scrollIntoView === 'function') {
-      try {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch (err) {}
-    }
-  };
-
-  return (
-    <s-box
-      background="subdued"
-      padding="large"
-      borderRadius="large"
-      borderWidth="base"
-      inlineSize="100%"
-    >
-      <s-stack direction="block" gap="base" inlineSize="100%">
-        <s-stack direction="inline" alignItems="center" gap="small-200">
-          <s-icon type="order" size="base" tone="neutral" />
-          <s-text type="strong">Quick Navigation</s-text>
-        </s-stack>
-
-        <s-stack direction="inline" gap="small-300" inlineSize="100%">
-          <s-clickable
-            onClick={(e) => handleNavigate(e, "items-customization")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Items & Customization"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="order" size="small" tone="neutral" />
-              <s-text type="strong">Items & Customization</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={(e) => handleNavigate(e, "delivery-contact-details")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Delivery & Contact Details"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="location" size="small" tone="neutral" />
-              <s-text type="strong">Delivery & Contact Details</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={(e) => handleNavigate(e, "promotions-billing")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Promotions & Billing"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="discount" size="small" tone="neutral" />
-              <s-text type="strong">Promotions & Billing</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={(e) => handleNavigate(e, "order-cancellation")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Order Cancellation"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="x" size="small" tone="critical" />
-              <s-text type="strong">Order Cancellation</s-text>
-            </s-stack>
-          </s-clickable>
-        </s-stack>
-      </s-stack>
-    </s-box>
-  );
-}
 
 function getLimitInMs(timeLimit) {
   if (!timeLimit) return 3600 * 1000;
@@ -334,28 +206,6 @@ function Extension() {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [order?.createdAt, timeLimit]);
-
-  useEffect(() => {
-    const handleHashScroll = () => {
-      const hash = typeof window !== 'undefined' && window.location?.hash?.replace('#', '');
-      if (hash) {
-        const element = getSectionElement(hash);
-        if (element && typeof element.scrollIntoView === 'function') {
-          setTimeout(() => {
-            try {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (e) {}
-          }, 100);
-        }
-      }
-    };
-
-    handleHashScroll();
-    if (typeof window !== 'undefined') {
-      window.addEventListener('hashchange', handleHashScroll);
-      return () => window.removeEventListener('hashchange', handleHashScroll);
-    }
-  }, []);
 
   const notifyUpdateSuccess = (url) => {
     setNeedsRefresh(true);
@@ -519,9 +369,6 @@ function Extension() {
         ) : (
         <s-section heading="Manage orders">
           {/* ── Welcome & Status Banner ── */}
-
-        {/* ── Quick Navigation Section ── */}
-        <QuickNavigation />  
 
         <s-stack direction="block" gap="large" paddingBlock="base" inlineSize="100%">
           {/* ── Category 1: Items & Customization ── */}

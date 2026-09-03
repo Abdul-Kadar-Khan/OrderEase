@@ -111,94 +111,6 @@ function SectionHeader({ title, description }) {
   );
 }
 
-function QuickNavigation() {
-  const handleNavigate = (sectionId) => {
-    try {
-      const element =
-        document.getElementById(sectionId) ||
-        document.querySelector(`#${sectionId}`) ||
-        document.querySelector(`[id="${sectionId}"]`);
-      if (element && typeof element.scrollIntoView === 'function') {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } catch (err) {
-      console.warn('Navigation error:', err);
-    }
-  };
-
-  return (
-    <s-box background="subdued" padding="large" borderRadius="large" borderWidth="base" inlineSize="100%">
-      <s-stack direction="block" gap="base" inlineSize="100%">
-        <s-stack direction="inline" alignItems="center" gap="small-200">
-          <s-icon type="order" size="base" tone="neutral" />
-          <s-text type="strong">Quick Navigation</s-text>
-        </s-stack>
-
-        <s-stack direction="inline" gap="small-300" inlineSize="100%">
-          <s-clickable
-            onClick={() => handleNavigate("items-customization")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Items & Customization"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="order" size="small" tone="neutral" />
-              <s-text type="strong">Items & Customization</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={() => handleNavigate("delivery-contact-details")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Delivery & Contact Details"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="location" size="small" tone="neutral" />
-              <s-text type="strong">Delivery & Contact Details</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={() => handleNavigate("promotions-billing")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Promotions & Billing"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="discount" size="small" tone="neutral" />
-              <s-text type="strong">Promotions & Billing</s-text>
-            </s-stack>
-          </s-clickable>
-
-          <s-clickable
-            onClick={() => handleNavigate("order-cancellation")}
-            padding="base"
-            paddingInline="large"
-            background="subdued"
-            borderRadius="large"
-            borderWidth="base"
-            accessibilityLabel="Navigate to Order Cancellation"
-          >
-            <s-stack direction="inline" alignItems="center" gap="small-200">
-              <s-icon type="x" size="small" tone="critical" />
-              <s-text type="strong">Order Cancellation</s-text>
-            </s-stack>
-          </s-clickable>
-        </s-stack>
-      </s-stack>
-    </s-box>
-  );
-}
 
 function getLimitInMs(timeLimit) {
   if (!timeLimit) return 3600 * 1000;
@@ -366,8 +278,6 @@ export default function OrderStatusBlock2() {
         )
       ) : (
         <s-section heading="Manage order">
-          {/* ── Quick Navigation Section ── */}
-          <QuickNavigation />
 
           <s-stack direction="block" gap="large" paddingBlock="base" inlineSize="100%">
             {/* ── Category 1: Items & Customization ── */}

@@ -7,7 +7,7 @@ const APP_URL = 'https://orderease-production.up.railway.app';
  * This calls the app's backend, which runs the Order Editing API workflow
  * (orderEditBegin -> orderEditAddVariant -> orderEditCommit) using the
  * store's Admin API session. The extension itself never talks to the
- * Admin API directly.
+ * Admin API directly. 
  * 
  * The backend commits with notifyCustomer: true, so if the added item
  * raises the order total, Shopify automatically emails the customer an

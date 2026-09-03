@@ -13,7 +13,6 @@ import crypto from "node:crypto";
 import PDFDocument from "pdfkit";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useState, useEffect, useRef } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 if (process.env.NODE_ENV !== "production") {
   if (!global.prismaGlobal) {
     global.prismaGlobal = new PrismaClient();
@@ -260,7 +259,7 @@ async function loader$t({
     }
   }));
 }
-async function action$p({
+async function action$o({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
@@ -466,7 +465,7 @@ async function action$p({
 }
 const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$p,
+  action: action$o,
   loader: loader$t
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$s({
@@ -484,7 +483,7 @@ async function loader$s({
     }
   }));
 }
-async function action$o({
+async function action$n({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
@@ -688,7 +687,7 @@ async function action$o({
 }
 const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$o,
+  action: action$n,
   loader: loader$s
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$r({
@@ -707,7 +706,7 @@ async function loader$r({
     }
   }));
 }
-async function action$n({
+async function action$m({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -893,10 +892,10 @@ async function action$n({
 }
 const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$n,
+  action: action$m,
   loader: loader$r
 }, Symbol.toStringTag, { value: "Module" }));
-const action$m = async ({
+const action$l = async ({
   request
 }) => {
   const {
@@ -921,7 +920,7 @@ const action$m = async ({
 };
 const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$m
+  action: action$l
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$q({
   request
@@ -962,7 +961,7 @@ async function loader$q({
     suggestions
   }));
 }
-async function action$l({
+async function action$k({
   request
 }) {
   var _a2;
@@ -1192,7 +1191,7 @@ async function fetchLocationSuggestions(query, storeDomain) {
 }
 const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$l,
+  action: action$k,
   loader: loader$q
 }, Symbol.toStringTag, { value: "Module" }));
 const GET_ORDER_DETAILS_QUERY = `#graphql
@@ -1340,7 +1339,7 @@ async function loader$p({
     }));
   }
 }
-async function action$k({
+async function action$j({
   request
 }) {
   const {
@@ -1362,10 +1361,10 @@ async function action$k({
 }
 const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$k,
+  action: action$j,
   loader: loader$p
 }, Symbol.toStringTag, { value: "Module" }));
-const action$j = async ({
+const action$i = async ({
   request
 }) => {
   const {
@@ -1385,7 +1384,7 @@ const action$j = async ({
 };
 const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$j
+  action: action$i
 }, Symbol.toStringTag, { value: "Module" }));
 const ORDER_TAGS_QUERY = `#graphql
   query GetOrderLineItemTags($id: ID!) {
@@ -1461,7 +1460,7 @@ async function loader$o({
     }));
   }
 }
-async function action$i({
+async function action$h({
   request
 }) {
   const {
@@ -1483,7 +1482,7 @@ async function action$i({
 }
 const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$i,
+  action: action$h,
   loader: loader$o
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$n({
@@ -1567,7 +1566,7 @@ async function loader$n({
     }
   }));
 }
-async function action$h({
+async function action$g({
   request
 }) {
   const {
@@ -1589,7 +1588,7 @@ async function action$h({
 }
 const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$h,
+  action: action$g,
   loader: loader$n
 }, Symbol.toStringTag, { value: "Module" }));
 const TAG_PREFIX$3 = "@d2:";
@@ -1778,7 +1777,7 @@ async function loader$m({
     }
   }));
 }
-async function action$g({
+async function action$f({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
@@ -2087,7 +2086,7 @@ async function action$g({
 }
 const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$g,
+  action: action$f,
   loader: loader$m
 }, Symbol.toStringTag, { value: "Module" }));
 function isOrderLevelApplication$2(app2) {
@@ -2114,7 +2113,7 @@ async function loader$l({
     }
   }));
 }
-async function action$f({
+async function action$e({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J;
@@ -2531,7 +2530,7 @@ async function action$f({
 }
 const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$f,
+  action: action$e,
   loader: loader$l
 }, Symbol.toStringTag, { value: "Module" }));
 function isOrderLevelApplication$1(app2) {
@@ -2574,7 +2573,7 @@ async function loader$k({
     }
   }));
 }
-async function action$e({
+async function action$d({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J;
@@ -3018,7 +3017,7 @@ async function action$e({
 }
 const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$e,
+  action: action$d,
   loader: loader$k
 }, Symbol.toStringTag, { value: "Module" }));
 function isOrderLevelApplication(app2) {
@@ -3076,7 +3075,7 @@ async function loader$j({
     }
   }));
 }
-async function action$d({
+async function action$c({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J;
@@ -3526,7 +3525,7 @@ async function action$d({
 }
 const route13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$d,
+  action: action$c,
   loader: loader$j
 }, Symbol.toStringTag, { value: "Module" }));
 const TAG_PREFIX$2 = "@d2:";
@@ -3784,7 +3783,7 @@ async function loader$i({
     }
   }));
 }
-async function action$c({
+async function action$b({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
@@ -4048,7 +4047,7 @@ async function action$c({
 }
 const route14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$c,
+  action: action$b,
   loader: loader$i
 }, Symbol.toStringTag, { value: "Module" }));
 const TAG_PREFIX$1 = "@d2:";
@@ -4307,7 +4306,7 @@ async function loader$h({
     }
   }));
 }
-async function action$b({
+async function action$a({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
@@ -4606,7 +4605,7 @@ async function action$b({
 }
 const route15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$b,
+  action: action$a,
   loader: loader$h
 }, Symbol.toStringTag, { value: "Module" }));
 const TAG_PREFIX = "@d2:";
@@ -4865,7 +4864,7 @@ async function loader$g({
     }
   }));
 }
-async function action$a({
+async function action$9({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
@@ -5200,7 +5199,7 @@ async function action$a({
 }
 const route16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$a,
+  action: action$9,
   loader: loader$g
 }, Symbol.toStringTag, { value: "Module" }));
 const LINK_TTL_MS = 5 * 60 * 1e3;
@@ -5655,7 +5654,7 @@ async function loader$e({
     }
   }));
 }
-async function action$9({
+async function action$8({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G, _H, _I, _J, _K, _L, _M, _N, _O, _P, _Q;
@@ -6372,7 +6371,7 @@ async function action$9({
 }
 const route18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$9,
+  action: action$8,
   loader: loader$e
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$d({
@@ -6555,7 +6554,7 @@ async function loader$d({
     }));
   }
 }
-async function action$8({
+async function action$7({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
@@ -6786,7 +6785,7 @@ async function action$8({
 }
 const route19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$8,
+  action: action$7,
   loader: loader$d
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$c({
@@ -6842,7 +6841,7 @@ async function loader$c({
     }));
   }
 }
-async function action$7({
+async function action$6({
   request
 }) {
   var _a2, _b, _c, _d;
@@ -7032,7 +7031,7 @@ async function action$7({
 }
 const route20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$7,
+  action: action$6,
   loader: loader$c
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$b({
@@ -7050,7 +7049,7 @@ async function loader$b({
     }
   }));
 }
-async function action$6({
+async function action$5({
   request
 }) {
   var _a2, _b, _c, _d, _e;
@@ -7212,7 +7211,7 @@ async function action$6({
 }
 const route21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$6,
+  action: action$5,
   loader: loader$b
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$a({
@@ -7230,7 +7229,7 @@ async function loader$a({
     }
   }));
 }
-const action$5 = async ({
+const action$4 = async ({
   request
 }) => {
   var _a2, _b;
@@ -7316,7 +7315,7 @@ const action$5 = async ({
 };
 const route22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$5,
+  action: action$4,
   loader: loader$a
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$9({
@@ -7334,7 +7333,7 @@ async function loader$9({
     }
   }));
 }
-async function action$4({
+async function action$3({
   request
 }) {
   var _a2, _b;
@@ -7427,7 +7426,7 @@ async function action$4({
 }
 const route23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$4,
+  action: action$3,
   loader: loader$9
 }, Symbol.toStringTag, { value: "Module" }));
 async function loader$8({
@@ -7475,7 +7474,7 @@ async function loader$8({
     }));
   }
 }
-async function action$3({
+async function action$2({
   request
 }) {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -7614,7 +7613,7 @@ async function action$3({
 }
 const route24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$3,
+  action: action$2,
   loader: loader$8
 }, Symbol.toStringTag, { value: "Module" }));
 function loginErrorMessage(loginErrors) {
@@ -7633,7 +7632,7 @@ const loader$7 = async ({
     errors
   };
 };
-const action$2 = async ({
+const action$1 = async ({
   request
 }) => {
   const errors = loginErrorMessage(await login(request));
@@ -7674,7 +7673,7 @@ const route$1 = UNSAFE_withComponentProps(function Auth() {
 });
 const route25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$2,
+  action: action$1,
   default: route$1,
   loader: loader$7
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7773,12 +7772,12 @@ const loader$5 = async ({
   await authenticate.admin(request);
   return null;
 };
-const headers$5 = (headersArgs) => {
+const headers$4 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
 const route27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  headers: headers$5,
+  headers: headers$4,
   loader: loader$5
 }, Symbol.toStringTag, { value: "Module" }));
 const loader$4 = async ({
@@ -7798,9 +7797,6 @@ const app = UNSAFE_withComponentProps(function App3() {
     apiKey,
     children: [/* @__PURE__ */ jsxs("s-app-nav", {
       children: [/* @__PURE__ */ jsx("s-link", {
-        href: "/app",
-        children: "Home"
-      }), /* @__PURE__ */ jsx("s-link", {
         href: "/app/active-services",
         children: "Active Services"
       }), /* @__PURE__ */ jsx("s-link", {
@@ -7809,9 +7805,6 @@ const app = UNSAFE_withComponentProps(function App3() {
       }), /* @__PURE__ */ jsx("s-link", {
         href: "/app/help",
         children: "Help & Guide"
-      }), /* @__PURE__ */ jsx("s-link", {
-        href: "/app/additional",
-        children: "Additional page"
       })]
     }), /* @__PURE__ */ jsx(Outlet, {})]
   });
@@ -7819,14 +7812,14 @@ const app = UNSAFE_withComponentProps(function App3() {
 const ErrorBoundary = UNSAFE_withErrorBoundaryProps(function ErrorBoundary2() {
   return boundary.error(useRouteError());
 });
-const headers$4 = (headersArgs) => {
+const headers$3 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
 const route28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   ErrorBoundary,
   default: app,
-  headers: headers$4,
+  headers: headers$3,
   loader: loader$4
 }, Symbol.toStringTag, { value: "Module" }));
 const SSwitch = "s-switch";
@@ -8006,7 +7999,7 @@ const loader$3 = async ({
     initialProducts
   };
 };
-const action$1 = async ({
+const action = async ({
   request
 }) => {
   var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -8241,7 +8234,7 @@ const action$1 = async ({
     result
   };
 };
-const headers$3 = (headersArgs) => {
+const headers$2 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
 const app_activeServices = UNSAFE_withComponentProps(function ActiveServicesPage() {
@@ -9240,9 +9233,9 @@ function ProductTagsSection({
 }
 const route29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action: action$1,
+  action,
   default: app_activeServices,
-  headers: headers$3,
+  headers: headers$2,
   loader: loader$3
 }, Symbol.toStringTag, { value: "Module" }));
 const app_additional = UNSAFE_withComponentProps(function AdditionalPage() {
@@ -9394,7 +9387,7 @@ const loader$2 = async ({
     featureUsageList
   };
 };
-const headers$2 = (headersArgs) => {
+const headers$1 = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
 const app_insights = UNSAFE_withComponentProps(function InsightsPage() {
@@ -9625,314 +9618,17 @@ const app_insights = UNSAFE_withComponentProps(function InsightsPage() {
 const route31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: app_insights,
-  headers: headers$2,
+  headers: headers$1,
   loader: loader$2
 }, Symbol.toStringTag, { value: "Module" }));
 const loader$1 = async ({
   request
 }) => {
   await authenticate.admin(request);
-  return null;
-};
-const action = async ({
-  request
-}) => {
-  const {
-    admin
-  } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][Math.floor(Math.random() * 4)];
-  const response = await admin.graphql(`#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-            demoInfo: metafield(namespace: "$app", key: "demo_info") {
-              jsonValue
-            }
-          }
-        }
-      }`, {
-    variables: {
-      product: {
-        title: `${color} Snowboard`,
-        metafields: [{
-          namespace: "$app",
-          key: "demo_info",
-          value: "Created by React Router Template"
-        }]
-      }
-    }
-  });
-  const responseJson = await response.json();
-  const product = responseJson.data.productCreate.product;
-  const variantId = product.variants.edges[0].node.id;
-  const variantResponse = await admin.graphql(`#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`, {
-    variables: {
-      productId: product.id,
-      variants: [{
-        id: variantId,
-        price: "100.00"
-      }]
-    }
-  });
-  const variantResponseJson = await variantResponse.json();
-  const metaobjectResponse = await admin.graphql(`#graphql
-    mutation shopifyReactRouterTemplateUpsertMetaobject($handle: MetaobjectHandleInput!, $values: JSON!) {
-      metaobjectUpsert(handle: $handle, values: $values) {
-        metaobject {
-          id
-          handle
-          values
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }`, {
-    variables: {
-      handle: {
-        type: "$app:example",
-        handle: "demo-entry"
-      },
-      values: {
-        title: "Demo Entry",
-        description: "This metaobject was created by the Shopify app template to demonstrate the metaobject API."
-      }
-    }
-  });
-  const metaobjectResponseJson = await metaobjectResponse.json();
-  return {
-    product: responseJson.data.productCreate.product,
-    variant: variantResponseJson.data.productVariantsBulkUpdate.productVariants,
-    metaobject: metaobjectResponseJson.data.metaobjectUpsert.metaobject
-  };
-};
-const app__index = UNSAFE_withComponentProps(function Index() {
-  var _a2, _b, _c, _d;
-  const fetcher = useFetcher();
-  const shopify2 = useAppBridge();
-  const isLoading = ["loading", "submitting"].includes(fetcher.state) && fetcher.formMethod === "POST";
-  useEffect(() => {
-    var _a3, _b2;
-    if ((_b2 = (_a3 = fetcher.data) == null ? void 0 : _a3.product) == null ? void 0 : _b2.id) {
-      shopify2.toast.show("Product created");
-    }
-  }, [(_b = (_a2 = fetcher.data) == null ? void 0 : _a2.product) == null ? void 0 : _b.id, shopify2]);
-  const generateProduct = () => fetcher.submit({}, {
-    method: "POST"
-  });
-  return /* @__PURE__ */ jsxs("s-page", {
-    heading: "Shopify app template",
-    children: [/* @__PURE__ */ jsx("s-button", {
-      slot: "primary-action",
-      onClick: generateProduct,
-      children: "Generate a product"
-    }), /* @__PURE__ */ jsx("s-section", {
-      heading: "Congrats on creating a new Shopify app 🎉 fff",
-      children: /* @__PURE__ */ jsxs("s-paragraph", {
-        children: ["This embedded app template uses", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/apps/tools/app-bridge",
-          target: "_blank",
-          children: "App Bridge"
-        }), " ", "interface examples like an", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "/app/additional",
-          children: "additional page in the app nav"
-        }), ", as well as an", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/api/admin-graphql",
-          target: "_blank",
-          children: "Admin GraphQL"
-        }), " ", "mutation demo, to provide a starting point for app development."]
-      })
-    }), /* @__PURE__ */ jsxs("s-section", {
-      heading: "Get started with products",
-      children: [/* @__PURE__ */ jsxs("s-paragraph", {
-        children: ["Generate a product with GraphQL and get the JSON output for that product. Learn more about the", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate",
-          target: "_blank",
-          children: "productCreate"
-        }), " ", "mutation in our API references. Includes a product", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/apps/build/custom-data/metafields",
-          target: "_blank",
-          children: "metafield"
-        }), " ", "and", " ", /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/apps/build/custom-data/metaobjects",
-          target: "_blank",
-          children: "metaobject"
-        }), "."]
-      }), /* @__PURE__ */ jsxs("s-stack", {
-        direction: "inline",
-        gap: "base",
-        children: [/* @__PURE__ */ jsx("s-button", {
-          onClick: generateProduct,
-          ...isLoading ? {
-            loading: true
-          } : {},
-          children: "Generate a product"
-        }), ((_c = fetcher.data) == null ? void 0 : _c.product) && /* @__PURE__ */ jsx("s-button", {
-          onClick: () => {
-            var _a3, _b2, _c2, _d2;
-            (_d2 = (_c2 = shopify2.intents).invoke) == null ? void 0 : _d2.call(_c2, "edit:shopify/Product", {
-              value: (_b2 = (_a3 = fetcher.data) == null ? void 0 : _a3.product) == null ? void 0 : _b2.id
-            });
-          },
-          target: "_blank",
-          variant: "tertiary",
-          children: "Edit product"
-        })]
-      }), ((_d = fetcher.data) == null ? void 0 : _d.product) && /* @__PURE__ */ jsx("s-section", {
-        heading: "productCreate mutation",
-        children: /* @__PURE__ */ jsxs("s-stack", {
-          direction: "block",
-          gap: "base",
-          children: [/* @__PURE__ */ jsx("s-box", {
-            padding: "base",
-            borderWidth: "base",
-            borderRadius: "base",
-            background: "subdued",
-            children: /* @__PURE__ */ jsx("pre", {
-              style: {
-                margin: 0,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word"
-              },
-              children: /* @__PURE__ */ jsx("code", {
-                children: JSON.stringify(fetcher.data.product, null, 2)
-              })
-            })
-          }), /* @__PURE__ */ jsx("s-heading", {
-            children: "productVariantsBulkUpdate mutation"
-          }), /* @__PURE__ */ jsx("s-box", {
-            padding: "base",
-            borderWidth: "base",
-            borderRadius: "base",
-            background: "subdued",
-            children: /* @__PURE__ */ jsx("pre", {
-              style: {
-                margin: 0,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word"
-              },
-              children: /* @__PURE__ */ jsx("code", {
-                children: JSON.stringify(fetcher.data.variant, null, 2)
-              })
-            })
-          }), /* @__PURE__ */ jsx("s-heading", {
-            children: "metaobjectUpsert mutation"
-          }), /* @__PURE__ */ jsx("s-box", {
-            padding: "base",
-            borderWidth: "base",
-            borderRadius: "base",
-            background: "subdued",
-            children: /* @__PURE__ */ jsx("pre", {
-              style: {
-                margin: 0,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word"
-              },
-              children: /* @__PURE__ */ jsx("code", {
-                children: JSON.stringify(fetcher.data.metaobject, null, 2)
-              })
-            })
-          })]
-        })
-      })]
-    }), /* @__PURE__ */ jsxs("s-section", {
-      slot: "aside",
-      heading: "App template specs",
-      children: [/* @__PURE__ */ jsxs("s-paragraph", {
-        children: [/* @__PURE__ */ jsx("s-text", {
-          children: "Framework: "
-        }), /* @__PURE__ */ jsx("s-link", {
-          href: "https://reactrouter.com/",
-          target: "_blank",
-          children: "React Router"
-        })]
-      }), /* @__PURE__ */ jsxs("s-paragraph", {
-        children: [/* @__PURE__ */ jsx("s-text", {
-          children: "Interface: "
-        }), /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/api/app-home/using-polaris-components",
-          target: "_blank",
-          children: "Polaris web components"
-        })]
-      }), /* @__PURE__ */ jsxs("s-paragraph", {
-        children: [/* @__PURE__ */ jsx("s-text", {
-          children: "API: "
-        }), /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/api/admin-graphql",
-          target: "_blank",
-          children: "GraphQL"
-        })]
-      }), /* @__PURE__ */ jsxs("s-paragraph", {
-        children: [/* @__PURE__ */ jsx("s-text", {
-          children: "Custom data: "
-        }), /* @__PURE__ */ jsx("s-link", {
-          href: "https://shopify.dev/docs/apps/build/custom-data",
-          target: "_blank",
-          children: "Metafields & metaobjects"
-        })]
-      }), /* @__PURE__ */ jsxs("s-paragraph", {
-        children: [/* @__PURE__ */ jsx("s-text", {
-          children: "Database: "
-        }), /* @__PURE__ */ jsx("s-link", {
-          href: "https://www.prisma.io/",
-          target: "_blank",
-          children: "Prisma"
-        })]
-      })]
-    }), /* @__PURE__ */ jsx("s-section", {
-      slot: "aside",
-      heading: "Next steps",
-      children: /* @__PURE__ */ jsxs("s-unordered-list", {
-        children: [/* @__PURE__ */ jsxs("s-list-item", {
-          children: ["Build an", " ", /* @__PURE__ */ jsx("s-link", {
-            href: "https://shopify.dev/docs/apps/getting-started/build-app-example",
-            target: "_blank",
-            children: "example app"
-          })]
-        }), /* @__PURE__ */ jsxs("s-list-item", {
-          children: ["Explore Shopify's API with", " ", /* @__PURE__ */ jsx("s-link", {
-            href: "https://shopify.dev/docs/apps/tools/graphiql-admin-api",
-            target: "_blank",
-            children: "GraphiQL"
-          })]
-        })]
-      })
-    })]
-  });
-});
-const headers$1 = (headersArgs) => {
-  return boundary.headers(headersArgs);
+  throw redirect("/app/active-services");
 };
 const route32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  action,
-  default: app__index,
-  headers: headers$1,
   loader: loader$1
 }, Symbol.toStringTag, { value: "Module" }));
 const loader = async ({
@@ -10877,7 +10573,7 @@ const route33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   headers,
   loader
 }, Symbol.toStringTag, { value: "Module" }));
-const serverManifest = { "entry": { "module": "/assets/entry.client-D4gpF5ER.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/root-Bvta0r3e.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.update-quantity": { "id": "routes/api.order-edit.update-quantity", "parentId": "root", "path": "api/order-edit/update-quantity", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.update-quantity-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.change-variant": { "id": "routes/api.order-edit.change-variant", "parentId": "root", "path": "api/order-edit/change-variant", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.change-variant-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.add-product": { "id": "routes/api.order-edit.add-product", "parentId": "root", "path": "api/order-edit/add-product", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.add-product-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.scopes_update": { "id": "routes/webhooks.app.scopes_update", "parentId": "root", "path": "webhooks/app/scopes_update", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.scopes_update-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.location-suggestions": { "id": "routes/api.location-suggestions", "parentId": "root", "path": "api/location-suggestions", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.location-suggestions-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.get-order": { "id": "routes/api.order-edit.get-order", "parentId": "root", "path": "api/order-edit/get-order", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.get-order-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.uninstalled": { "id": "routes/webhooks.app.uninstalled", "parentId": "root", "path": "webhooks/app/uninstalled", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.uninstalled-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.upsell-tags": { "id": "routes/api.order.upsell-tags", "parentId": "root", "path": "api/order/upsell-tags", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.upsell-tags-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.service-settings": { "id": "routes/api.service-settings", "parentId": "root", "path": "api/service-settings", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.service-settings-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount2": { "id": "routes/api.order.discount2", "parentId": "root", "path": "api/order/discount2", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount2-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount3": { "id": "routes/api.order.discount3", "parentId": "root", "path": "api/order/discount3", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount3-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount4": { "id": "routes/api.order.discount4", "parentId": "root", "path": "api/order/discount4", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount4-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount5": { "id": "routes/api.order.discount5", "parentId": "root", "path": "api/order/discount5", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount5-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount6": { "id": "routes/api.order.discount6", "parentId": "root", "path": "api/order/discount6", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount6-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount7": { "id": "routes/api.order.discount7", "parentId": "root", "path": "api/order/discount7", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount7-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount8": { "id": "routes/api.order.discount8", "parentId": "root", "path": "api/order/discount8", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount8-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/public.invoice-link": { "id": "routes/public.invoice-link", "parentId": "root", "path": "public/invoice-link", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/public.invoice-link-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount": { "id": "routes/api.order.discount", "parentId": "root", "path": "api/order/discount", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.shipping": { "id": "routes/api.order.shipping", "parentId": "root", "path": "api/order/shipping", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.shipping-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.address": { "id": "routes/api.order.address", "parentId": "root", "path": "api/order/address", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.address-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.contact": { "id": "routes/api.order.contact", "parentId": "root", "path": "api/order/contact", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.contact-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.invoice": { "id": "routes/api.order.invoice", "parentId": "root", "path": "api/order/invoice", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.invoice-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.cancel": { "id": "routes/api.order.cancel", "parentId": "root", "path": "api/order/cancel", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.cancel-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.note": { "id": "routes/api.order.note", "parentId": "root", "path": "api/order/note", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.note-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.login": { "id": "routes/auth.login", "parentId": "root", "path": "auth/login", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-_An4tzd_.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-BI6pnsbT.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": ["/assets/route-Xpdx9QZl.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.$": { "id": "routes/auth.$", "parentId": "root", "path": "auth/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/auth._-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app": { "id": "routes/app", "parentId": "root", "path": "app", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/app-DFnQoY-M.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.active-services": { "id": "routes/app.active-services", "parentId": "routes/app", "path": "active-services", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.active-services-BXDmDLyg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.additional": { "id": "routes/app.additional", "parentId": "routes/app", "path": "additional", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.additional-CO-TBlJg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.insights": { "id": "routes/app.insights", "parentId": "routes/app", "path": "insights", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.insights-DebMz80N.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app._index": { "id": "routes/app._index", "parentId": "routes/app", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app._index-BWKGwpOi.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.help": { "id": "routes/app.help", "parentId": "routes/app", "path": "help", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.help-OAOZK69q.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-d9c9cf94.js", "version": "d9c9cf94", "sri": void 0 };
+const serverManifest = { "entry": { "module": "/assets/entry.client-kdD314om.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [] }, "routes": { "root": { "id": "root", "parentId": void 0, "path": "", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/root-Bvta0r3e.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.update-quantity": { "id": "routes/api.order-edit.update-quantity", "parentId": "root", "path": "api/order-edit/update-quantity", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.update-quantity-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.change-variant": { "id": "routes/api.order-edit.change-variant", "parentId": "root", "path": "api/order-edit/change-variant", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.change-variant-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.add-product": { "id": "routes/api.order-edit.add-product", "parentId": "root", "path": "api/order-edit/add-product", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.add-product-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.scopes_update": { "id": "routes/webhooks.app.scopes_update", "parentId": "root", "path": "webhooks/app/scopes_update", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.scopes_update-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.location-suggestions": { "id": "routes/api.location-suggestions", "parentId": "root", "path": "api/location-suggestions", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.location-suggestions-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order-edit.get-order": { "id": "routes/api.order-edit.get-order", "parentId": "root", "path": "api/order-edit/get-order", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order-edit.get-order-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/webhooks.app.uninstalled": { "id": "routes/webhooks.app.uninstalled", "parentId": "root", "path": "webhooks/app/uninstalled", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/webhooks.app.uninstalled-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.upsell-tags": { "id": "routes/api.order.upsell-tags", "parentId": "root", "path": "api/order/upsell-tags", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.upsell-tags-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.service-settings": { "id": "routes/api.service-settings", "parentId": "root", "path": "api/service-settings", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.service-settings-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount2": { "id": "routes/api.order.discount2", "parentId": "root", "path": "api/order/discount2", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount2-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount3": { "id": "routes/api.order.discount3", "parentId": "root", "path": "api/order/discount3", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount3-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount4": { "id": "routes/api.order.discount4", "parentId": "root", "path": "api/order/discount4", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount4-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount5": { "id": "routes/api.order.discount5", "parentId": "root", "path": "api/order/discount5", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount5-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount6": { "id": "routes/api.order.discount6", "parentId": "root", "path": "api/order/discount6", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount6-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount7": { "id": "routes/api.order.discount7", "parentId": "root", "path": "api/order/discount7", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount7-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount8": { "id": "routes/api.order.discount8", "parentId": "root", "path": "api/order/discount8", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount8-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/public.invoice-link": { "id": "routes/public.invoice-link", "parentId": "root", "path": "public/invoice-link", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/public.invoice-link-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.discount": { "id": "routes/api.order.discount", "parentId": "root", "path": "api/order/discount", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.discount-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.shipping": { "id": "routes/api.order.shipping", "parentId": "root", "path": "api/order/shipping", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.shipping-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.address": { "id": "routes/api.order.address", "parentId": "root", "path": "api/order/address", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.address-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.contact": { "id": "routes/api.order.contact", "parentId": "root", "path": "api/order/contact", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.contact-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.invoice": { "id": "routes/api.order.invoice", "parentId": "root", "path": "api/order/invoice", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.invoice-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.cancel": { "id": "routes/api.order.cancel", "parentId": "root", "path": "api/order/cancel", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.cancel-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/api.order.note": { "id": "routes/api.order.note", "parentId": "root", "path": "api/order/note", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/api.order.note-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.login": { "id": "routes/auth.login", "parentId": "root", "path": "auth/login", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-_An4tzd_.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/_index": { "id": "routes/_index", "parentId": "root", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/route-BI6pnsbT.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": ["/assets/route-Xpdx9QZl.css"], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/auth.$": { "id": "routes/auth.$", "parentId": "root", "path": "auth/*", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/auth._-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app": { "id": "routes/app", "parentId": "root", "path": "app", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": true, "module": "/assets/app-DSIbtVC4.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js", "/assets/AppProxyLink-BkIxrOSH.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.active-services": { "id": "routes/app.active-services", "parentId": "routes/app", "path": "active-services", "index": void 0, "caseSensitive": void 0, "hasAction": true, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.active-services-BXDmDLyg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.additional": { "id": "routes/app.additional", "parentId": "routes/app", "path": "additional", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": false, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.additional-CO-TBlJg.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.insights": { "id": "routes/app.insights", "parentId": "routes/app", "path": "insights", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.insights-DebMz80N.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app._index": { "id": "routes/app._index", "parentId": "routes/app", "path": void 0, "index": true, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": false, "hasErrorBoundary": false, "module": "/assets/app._index-l0sNRNKZ.js", "imports": [], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 }, "routes/app.help": { "id": "routes/app.help", "parentId": "routes/app", "path": "help", "index": void 0, "caseSensitive": void 0, "hasAction": false, "hasLoader": true, "hasClientAction": false, "hasClientLoader": false, "hasClientMiddleware": false, "hasDefaultExport": true, "hasErrorBoundary": false, "module": "/assets/app.help-OAOZK69q.js", "imports": ["/assets/jsx-runtime-BtRgd1-Y.js"], "css": [], "clientActionModule": void 0, "clientLoaderModule": void 0, "clientMiddlewareModule": void 0, "hydrateFallbackModule": void 0 } }, "url": "/assets/manifest-a1c0e51b.js", "version": "a1c0e51b", "sri": void 0 };
 const assetsBuildDirectory = "build/client";
 const basename = "/";
 const future = { "unstable_optimizeDeps": false, "v8_passThroughRequests": false, "v8_trailingSlashAwareDataRequests": false, "unstable_previewServerPrerendering": false, "v8_middleware": false, "v8_splitRouteModules": false, "v8_viteEnvironmentApi": false };
