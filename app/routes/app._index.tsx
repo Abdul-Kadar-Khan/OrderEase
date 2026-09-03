@@ -1,8 +1,21 @@
+import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { redirect } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
-  throw redirect("/app/active-services");
+  return null;
 };
+
+export default function Index() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    navigate(`/app/active-services${location.search}`, { replace: true });
+  }, [navigate, location.search]);
+
+  return null;
+}
+
