@@ -64,7 +64,6 @@ const REMOVE_TAGS_MUTATION = `#graphql
   }
 `;
 
-
 // ─── Service definitions (static metadata) ─────────────────────────────────
 
 const SERVICES = [
@@ -151,7 +150,11 @@ const SERVICES = [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const shop = session.shop.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim();
+  const shop = session.shop
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .toLowerCase()
+    .trim();
 
   // 1. Fetch existing settings rows for this shop
   let rows = await db.serviceSettings.findMany({
@@ -240,7 +243,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const shop = session.shop.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase().trim();
+  const shop = session.shop
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .toLowerCase()
+    .trim();
 
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
@@ -253,7 +260,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { ok: false, error: "Product ID and Tag are required" };
     }
 
-    console.log(`[ActiveServices Action] Adding tag "${tag}" to product ${productId}`);
+    console.log(
+      `[ActiveServices Action] Adding tag "${tag}" to product ${productId}`,
+    );
     const res = await admin.graphql(ADD_TAGS_MUTATION, {
       variables: { id: productId, tags: [tag] },
     });
@@ -275,7 +284,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { ok: false, error: "Product ID and Tag are required" };
     }
 
-    console.log(`[ActiveServices Action] Removing tag "${tag}" from product ${productId}`);
+    console.log(
+      `[ActiveServices Action] Removing tag "${tag}" from product ${productId}`,
+    );
     const res = await admin.graphql(REMOVE_TAGS_MUTATION, {
       variables: { id: productId, tags: [tag] },
     });
@@ -291,10 +302,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "searchProducts") {
     const query = (formData.get("query") as string)?.trim() || "";
-    console.log(`[ActiveServices Action] Searching products with query "${query}"`);
+    console.log(
+      `[ActiveServices Action] Searching products with query "${query}"`,
+    );
 
     const res = await admin.graphql(GET_PRODUCTS_QUERY, {
-      variables: { first: 12, query: query ? `title:*${query}* OR tag:*${query}*` : undefined },
+      variables: {
+        first: 12,
+        query: query ? `title:*${query}* OR tag:*${query}*` : undefined,
+      },
     });
     const json = await res.json();
     const edges = json.data?.products?.edges ?? [];
@@ -354,9 +370,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "saveMaxEdits") {
     const maxEditsStr = formData.get("maxEdits") as string;
-    const maxEdits = !maxEditsStr || maxEditsStr === "0" || maxEditsStr === "unlimited"
-      ? null
-      : parseInt(maxEditsStr, 10);
+    const maxEdits =
+      !maxEditsStr || maxEditsStr === "0" || maxEditsStr === "unlimited"
+        ? null
+        : parseInt(maxEditsStr, 10);
 
     console.log(
       `[ActiveServices Action] Saving max edits limit: shop=${shop}, maxEdits=${maxEdits}`,
@@ -433,7 +450,8 @@ export const headers: HeadersFunction = (headersArgs) => {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function ActiveServicesPage(): JSX.Element {
-  const { services, timeLimitSettings, googleApiKey, initialProducts } = useLoaderData<typeof loader>();
+  const { services, timeLimitSettings, googleApiKey, initialProducts } =
+    useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Active Services">
@@ -490,14 +508,16 @@ interface MaxEditsSectionProps {
   initialMaxEdits: number | null;
 }
 
-function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element {
+function MaxEditsSection({
+  initialMaxEdits,
+}: MaxEditsSectionProps): JSX.Element {
   const fetcher = useFetcher();
   const initialPreset =
     initialMaxEdits === null || initialMaxEdits === 0
       ? "unlimited"
       : [1, 2, 3, 5].includes(initialMaxEdits)
-      ? String(initialMaxEdits)
-      : "custom";
+        ? String(initialMaxEdits)
+        : "custom";
 
   const [selectedPreset, setSelectedPreset] = useEffectState(initialPreset);
   const [customVal, setCustomVal] = useEffectState(initialMaxEdits ?? 3);
@@ -508,17 +528,23 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
       initialMaxEdits === null || initialMaxEdits === 0
         ? "unlimited"
         : [1, 2, 3, 5].includes(initialMaxEdits)
-        ? String(initialMaxEdits)
-        : "custom";
+          ? String(initialMaxEdits)
+          : "custom";
     setSelectedPreset(preset);
     setCustomVal(initialMaxEdits ?? 3);
   }, [initialMaxEdits]);
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "maxEdits") {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.ok &&
+      fetcher.data?.type === "maxEdits"
+    ) {
       setIsSaved(true);
       if (typeof window !== "undefined" && (window as any).shopify?.toast) {
-        (window as any).shopify.toast.show("Maximum order edit limit updated successfully!");
+        (window as any).shopify.toast.show(
+          "Maximum order edit limit updated successfully!",
+        );
       }
       const timer = setTimeout(() => setIsSaved(false), 4000);
       return () => clearTimeout(timer);
@@ -541,19 +567,30 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
 
   return (
     <s-section heading="Maximum Order Edits Allowed">
-      <s-box padding="large" border="base" borderRadius="base" background="subdued">
+      <s-box
+        padding="large"
+        border="base"
+        borderRadius="base"
+        background="subdued"
+      >
         <s-stack direction="block" gap="large">
           <s-stack direction="block" gap="small">
             <s-text type="strong">Maximum Allowed Edits Per Order</s-text>
             <s-paragraph color="subdued">
-              Set the maximum number of edit actions a customer can perform on a single order (e.g. 3 edits max). Once this edit count is reached, order editing will be disabled. PDF Invoice downloads will always remain available.
+              Set the maximum number of edit actions a customer can perform on a
+              single order (e.g. 3 edits max). Once this edit count is reached,
+              order editing will be disabled. PDF Invoice downloads will always
+              remain available.
             </s-paragraph>
           </s-stack>
 
           {/* Presets Grid */}
           <s-stack direction="block" gap="small">
             <s-text type="strong">Limit Options</s-text>
-            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(130px, 1fr))" gap="small">
+            <s-grid
+              gridTemplateColumns="repeat(auto-fit, minmax(130px, 1fr))"
+              gap="small"
+            >
               {MAX_EDITS_PRESETS.map((preset) => {
                 const isActive = selectedPreset === preset.value;
                 return (
@@ -563,7 +600,9 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
                     style={{
                       padding: "10px 14px",
                       borderRadius: "8px",
-                      border: isActive ? "2px solid #008060" : "1px solid #c9cccf",
+                      border: isActive
+                        ? "2px solid #008060"
+                        : "1px solid #c9cccf",
                       backgroundColor: isActive ? "#eaf4f0" : "#ffffff",
                       color: isActive ? "#004c3f" : "#202223",
                       fontWeight: isActive ? "600" : "400",
@@ -590,14 +629,24 @@ function MaxEditsSection({ initialMaxEdits }: MaxEditsSectionProps): JSX.Element
             <s-box padding="base" border="base" borderRadius="base">
               <s-stack direction="block" gap="base">
                 <s-text type="strong">Custom Max Edits Limit</s-text>
-                <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    alignItems: "flex-end",
+                  }}
+                >
                   <div style={{ flex: 1 }}>
                     <s-text color="subdued">Number of Edits Allowed</s-text>
                     <input
                       type="number"
                       min="1"
                       value={customVal}
-                      onChange={(e) => setCustomVal(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) =>
+                        setCustomVal(
+                          Math.max(1, parseInt(e.target.value, 10) || 1),
+                        )
+                      }
                       style={{
                         marginTop: "6px",
                         padding: "8px 12px",
@@ -662,7 +711,9 @@ interface TimeLimitSectionProps {
   };
 }
 
-function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Element {
+function TimeLimitSection({
+  initialSettings,
+}: TimeLimitSectionProps): JSX.Element {
   const fetcher = useFetcher();
   const [selectedPreset, setSelectedPreset] = useEffectState(
     initialSettings.timeLimit || "1h",
@@ -683,10 +734,16 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
   }, [initialSettings]);
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "timeLimit") {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.ok &&
+      fetcher.data?.type === "timeLimit"
+    ) {
       setIsSaved(true);
       if (typeof window !== "undefined" && (window as any).shopify?.toast) {
-        (window as any).shopify.toast.show("Order edit time limit updated successfully!");
+        (window as any).shopify.toast.show(
+          "Order edit time limit updated successfully!",
+        );
       }
       const timer = setTimeout(() => setIsSaved(false), 4000);
       return () => clearTimeout(timer);
@@ -717,14 +774,19 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
           <s-stack direction="block" gap="small">
             <s-text type="strong">Maximum Allowed Time for Order Edits</s-text>
             <s-paragraph color="subdued">
-              Set how long after placing an order a customer is permitted to edit their order. Once this time window expires, editing will be disabled.
+              Set how long after placing an order a customer is permitted to
+              edit their order. Once this time window expires, editing will be
+              disabled.
             </s-paragraph>
           </s-stack>
 
           {/* Presets Grid */}
           <s-stack direction="block" gap="small">
             <s-text type="strong">Preset Options</s-text>
-            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(130px, 1fr))" gap="small">
+            <s-grid
+              gridTemplateColumns="repeat(auto-fit, minmax(130px, 1fr))"
+              gap="small"
+            >
               {TIME_LIMIT_PRESETS.map((preset) => {
                 const isActive = selectedPreset === preset.value;
                 return (
@@ -734,7 +796,9 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
                     style={{
                       padding: "10px 14px",
                       borderRadius: "8px",
-                      border: isActive ? "2px solid #008060" : "1px solid #c9cccf",
+                      border: isActive
+                        ? "2px solid #008060"
+                        : "1px solid #c9cccf",
                       backgroundColor: isActive ? "#eaf4f0" : "#ffffff",
                       color: isActive ? "#004c3f" : "#202223",
                       fontWeight: isActive ? "600" : "400",
@@ -756,21 +820,28 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
 
           {/* Custom Time Form */}
           {selectedPreset === "custom" && (
-            <s-box
-              padding="base"
-              border="base"
-              borderRadius="base"
-            >
+            <s-box padding="base" border="base" borderRadius="base">
               <s-stack direction="block" gap="base">
                 <s-text type="strong">Custom Duration</s-text>
-                <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    alignItems: "flex-end",
+                    flexWrap: "wrap",
+                  }}
+                >
                   <div style={{ flex: 1, minWidth: "140px" }}>
                     <s-text color="subdued">Duration Value</s-text>
                     <input
                       type="number"
                       min="1"
                       value={customVal}
-                      onChange={(e) => setCustomVal(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) =>
+                        setCustomVal(
+                          Math.max(1, parseInt(e.target.value, 10) || 1),
+                        )
+                      }
                       style={{
                         marginTop: "6px",
                         padding: "8px 12px",
@@ -807,7 +878,9 @@ function TimeLimitSection({ initialSettings }: TimeLimitSectionProps): JSX.Eleme
 
                   <button
                     type="button"
-                    onClick={() => handleSave("custom", customVal, customUnitVal)}
+                    onClick={() =>
+                      handleSave("custom", customVal, customUnitVal)
+                    }
                     style={{
                       padding: "9px 18px",
                       borderRadius: "6px",
@@ -940,20 +1013,28 @@ interface GoogleApiKeySectionProps {
   initialApiKey: string;
 }
 
-function GoogleApiKeySection({ initialApiKey }: GoogleApiKeySectionProps): JSX.Element {
+function GoogleApiKeySection({
+  initialApiKey,
+}: GoogleApiKeySectionProps): JSX.Element {
   const fetcher = useFetcher();
   const [apiKey, setApiKey] = useEffectState(initialApiKey || "");
   const [showKey, setShowKey] = useState(false);
   const [isSaved, setIsSaved] = useEffectState(false);
   const [actionMessage, setActionMessage] = useState("");
-  const [lastAction, setLastAction] = useState<"saved" | "deleted" | null>(null);
+  const [lastAction, setLastAction] = useState<"saved" | "deleted" | null>(
+    null,
+  );
 
   useEffect(() => {
     setApiKey(initialApiKey || "");
   }, [initialApiKey]);
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok && fetcher.data?.type === "googleApiKey") {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.ok &&
+      fetcher.data?.type === "googleApiKey"
+    ) {
       setIsSaved(true);
       const isDeleted = fetcher.data?.action === "deleted";
       setLastAction(isDeleted ? "deleted" : "saved");
@@ -997,32 +1078,66 @@ function GoogleApiKeySection({ initialApiKey }: GoogleApiKeySectionProps): JSX.E
     );
   };
 
-  const isDeleting = fetcher.state !== "idle" && fetcher.formData?.get("intent") === "deleteGoogleApiKey";
-  const isConfigured = Boolean((apiKey && apiKey.trim().length > 0) || isDeleting);
-  const showDeleteButton = isConfigured || isDeleting || (isSaved && lastAction === "deleted");
+  const isDeleting =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "deleteGoogleApiKey";
+  const isConfigured = Boolean(
+    (apiKey && apiKey.trim().length > 0) || isDeleting,
+  );
+  const showDeleteButton =
+    isConfigured || isDeleting || (isSaved && lastAction === "deleted");
 
   return (
     <s-section heading="Google Places & Location Suggestions">
-      <s-box padding="large" border="base" borderRadius="base" background="subdued">
+      <s-box
+        padding="large"
+        border="base"
+        borderRadius="base"
+        background="subdued"
+      >
         <s-stack direction="block" gap="large">
           <s-stack direction="block" gap="small">
-            <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+            <s-stack
+              direction="inline"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <s-text type="strong">🔑 Google Places API Key</s-text>
-              <s-badge tone={isConfigured && !isDeleting && lastAction !== "deleted" ? "success" : "neutral"}>
-                {isConfigured && !isDeleting && lastAction !== "deleted" ? "Active (Autocomplete Enabled)" : "Disabled (No Key)"}
+              <s-badge
+                tone={
+                  isConfigured && !isDeleting && lastAction !== "deleted"
+                    ? "success"
+                    : "neutral"
+                }
+              >
+                {isConfigured && !isDeleting && lastAction !== "deleted"
+                  ? "Active (Autocomplete Enabled)"
+                  : "Disabled (No Key)"}
               </s-badge>
             </s-stack>
             <s-paragraph color="subdued">
-              Enter your Google Places & Geocoding API Key to enable instant location autocomplete and auto-filling address suggestions for your store customers. If left blank, the location suggestions section will be hidden on storefront address forms.
+              Enter your Google Places & Geocoding API Key to enable instant
+              location autocomplete and auto-filling address suggestions for
+              your store customers. If left blank, the location suggestions
+              section will be hidden on storefront address forms.
             </s-paragraph>
           </s-stack>
 
-          <s-box padding="base" border="base" borderRadius="base" background="surface">
+          <s-box
+            padding="base"
+            border="base"
+            borderRadius="base"
+            background="surface"
+          >
             <s-stack direction="block" gap="base">
               <s-text type="strong">Merchant API Key</s-text>
-              <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+              <div
+                style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}
+              >
                 <div style={{ flex: 1, position: "relative" }}>
-                  <s-text color="subdued">API Key (Places API & Geocoding API enabled)</s-text>
+                  <s-text color="subdued">
+                    API Key (Places API & Geocoding API enabled)
+                  </s-text>
                   <input
                     type={showKey ? "text" : "password"}
                     value={apiKey}
@@ -1072,7 +1187,10 @@ function GoogleApiKeySection({ initialApiKey }: GoogleApiKeySectionProps): JSX.E
                     flexShrink: 0,
                   }}
                 >
-                  {fetcher.state !== "idle" && fetcher.formData?.get("intent") === "saveGoogleApiKey" ? "Saving..." : "Save Key"}
+                  {fetcher.state !== "idle" &&
+                  fetcher.formData?.get("intent") === "saveGoogleApiKey"
+                    ? "Saving..."
+                    : "Save Key"}
                 </button>
 
                 {showDeleteButton && (
@@ -1126,24 +1244,39 @@ interface ProductTagsSectionProps {
   initialProducts: ProductItem[];
 }
 
-function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.Element {
-  const [products, setProducts] = useState<ProductItem[]>(initialProducts || []);
+function ProductTagsSection({
+  initialProducts,
+}: ProductTagsSectionProps): JSX.Element {
+  const [products, setProducts] = useState<ProductItem[]>(
+    initialProducts || [],
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [newTagsMap, setNewTagsMap] = useState<Record<string, string>>({});
-  const [bannerInfo, setBannerInfo] = useState<{ msg: string; tone: "success" | "critical" } | null>(null);
+  const [bannerInfo, setBannerInfo] = useState<{
+    msg: string;
+    tone: "success" | "critical";
+  } | null>(null);
   const searchFetcher = useFetcher<any>();
   const tagFetcher = useFetcher<any>();
 
   useEffect(() => {
-    if (searchFetcher.state === "idle" && searchFetcher.data?.ok && searchFetcher.data?.type === "searchProducts") {
+    if (
+      searchFetcher.state === "idle" &&
+      searchFetcher.data?.ok &&
+      searchFetcher.data?.type === "searchProducts"
+    ) {
       setProducts(searchFetcher.data.products || []);
       setHasSearched(true);
     }
   }, [searchFetcher.state, searchFetcher.data]);
 
   useEffect(() => {
-    if (tagFetcher.state === "idle" && tagFetcher.data?.ok && tagFetcher.data?.type === "productTag") {
+    if (
+      tagFetcher.state === "idle" &&
+      tagFetcher.data?.ok &&
+      tagFetcher.data?.type === "productTag"
+    ) {
       const { action, productId, tag } = tagFetcher.data;
       setProducts((prev) =>
         prev.map((p) => {
@@ -1155,10 +1288,13 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
             updatedTags = updatedTags.filter((t) => t !== tag);
           }
           return { ...p, tags: updatedTags };
-        })
+        }),
       );
       setBannerInfo({
-        msg: action === "added" ? `Added tag "${tag}" successfully!` : `Removed tag "${tag}" successfully!`,
+        msg:
+          action === "added"
+            ? `Added tag "${tag}" successfully!`
+            : `Removed tag "${tag}" successfully!`,
         tone: action === "added" ? "success" : "critical",
       });
       const timer = setTimeout(() => setBannerInfo(null), 4000);
@@ -1169,34 +1305,58 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
   const handleSearch = (e: any) => {
     e.preventDefault();
     setHasSearched(true);
-    searchFetcher.submit({ intent: "searchProducts", query: searchQuery }, { method: "post" });
+    searchFetcher.submit(
+      { intent: "searchProducts", query: searchQuery },
+      { method: "post" },
+    );
   };
 
   const handleAddTag = (productId: string, tagToAdd: string) => {
     if (!tagToAdd || !tagToAdd.trim()) return;
     const cleanTag = tagToAdd.trim();
-    tagFetcher.submit({ intent: "addProductTag", productId, tag: cleanTag }, { method: "post" });
+    tagFetcher.submit(
+      { intent: "addProductTag", productId, tag: cleanTag },
+      { method: "post" },
+    );
     setNewTagsMap((prev) => ({ ...prev, [productId]: "" }));
   };
 
   const handleRemoveTag = (productId: string, tagToRemove: string) => {
-    tagFetcher.submit({ intent: "removeProductTag", productId, tag: tagToRemove }, { method: "post" });
+    tagFetcher.submit(
+      { intent: "removeProductTag", productId, tag: tagToRemove },
+      { method: "post" },
+    );
   };
 
   return (
     <s-section heading="Product Tags & Upsell Management">
-      <s-box padding="large" border="base" borderRadius="base" background="subdued">
+      <s-box
+        padding="large"
+        border="base"
+        borderRadius="base"
+        background="subdued"
+      >
         <s-stack direction="block" gap="large">
           <s-stack direction="block" gap="small">
-            <s-text type="strong">🏷️ Configure Product Tags for Upsell Recommendations</s-text>
+            <s-text type="strong">
+              🏷️ Configure Product Tags for Upsell Recommendations
+            </s-text>
             <s-paragraph color="subdued">
-              Organize your product catalog by managing product tags. The OrderEase Upsell feature automatically pairs items in a customer's order tagged with [tag] with recommendation products tagged with [tag]-upshell.
+              Organize your product catalog by managing product tags. The
+              OrderEase Upsell feature automatically pairs items in a customer's
+              order tagged with [tag] with recommendation products tagged with
+              [tag]-upshell.
             </s-paragraph>
           </s-stack>
 
-          {bannerInfo ? <s-banner tone={bannerInfo.tone}>{bannerInfo.msg}</s-banner> : null}
+          {bannerInfo ? (
+            <s-banner tone={bannerInfo.tone}>{bannerInfo.msg}</s-banner>
+          ) : null}
 
-          <form onSubmit={handleSearch} style={{ display: "flex", gap: "10px" }}>
+          <form
+            onSubmit={handleSearch}
+            style={{ display: "flex", gap: "10px" }}
+          >
             <input
               type="text"
               placeholder="Search products by title or tag..."
@@ -1222,29 +1382,47 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                 cursor: "pointer",
               }}
             >
-              {searchFetcher.state !== "idle" ? "Searching..." : "Search Products"}
+              {searchFetcher.state !== "idle"
+                ? "Searching..."
+                : "Search Products"}
             </button>
           </form>
 
           <s-stack direction="block" gap="base">
             {searchFetcher.state !== "idle" ? (
               <s-box padding="base" border="base" borderRadius="base">
-                <s-paragraph color="subdued">⏳ Searching products...</s-paragraph>
+                <s-paragraph color="subdued">
+                  ⏳ Searching products...
+                </s-paragraph>
               </s-box>
             ) : !hasSearched ? (
               <s-box padding="base" border="base" borderRadius="base">
-                <s-paragraph color="subdued">🔍 Search for a product by title or tag above to view and manage its tags.</s-paragraph>
+                <s-paragraph color="subdued">
+                  🔍 Search for a product by title or tag above to view and
+                  manage its tags.
+                </s-paragraph>
               </s-box>
             ) : products.length === 0 ? (
               <s-box padding="base" border="base" borderRadius="base">
-                <s-paragraph color="subdued">No products found. Try adjusting your search query.</s-paragraph>
+                <s-paragraph color="subdued">
+                  No products found. Try adjusting your search query.
+                </s-paragraph>
               </s-box>
             ) : (
               products.map((prod) => {
                 const currentNewTag = newTagsMap[prod.id] || "";
                 return (
-                  <s-box key={prod.id} padding="base" border="base" borderRadius="base">
-                    <s-grid gridTemplateColumns="auto 1fr" gap="base" alignItems="start">
+                  <s-box
+                    key={prod.id}
+                    padding="base"
+                    border="base"
+                    borderRadius="base"
+                  >
+                    <s-grid
+                      gridTemplateColumns="auto 1fr"
+                      gap="base"
+                      alignItems="start"
+                    >
                       <div
                         style={{
                           width: "56px",
@@ -1259,7 +1437,15 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                         }}
                       >
                         {prod.imageUrl ? (
-                          <img src={prod.imageUrl} alt={prod.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img
+                            src={prod.imageUrl}
+                            alt={prod.title}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
                         ) : (
                           <span style={{ fontSize: "20px" }}>📦</span>
                         )}
@@ -1268,7 +1454,14 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                       <s-stack direction="block" gap="small">
                         <s-text type="strong">{prod.title}</s-text>
 
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "6px",
+                            alignItems: "center",
+                          }}
+                        >
                           {prod.tags && prod.tags.length > 0 ? (
                             prod.tags.map((tag) => {
                               const isUpsellTag = tag.endsWith("-upshell");
@@ -1281,9 +1474,13 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                                     gap: "6px",
                                     padding: "3px 8px",
                                     borderRadius: "12px",
-                                    backgroundColor: isUpsellTag ? "#eaf4f0" : "#f1f2f3",
+                                    backgroundColor: isUpsellTag
+                                      ? "#eaf4f0"
+                                      : "#f1f2f3",
                                     color: isUpsellTag ? "#004c3f" : "#202223",
-                                    border: isUpsellTag ? "1px solid #95c9b4" : "1px solid #c9cccf",
+                                    border: isUpsellTag
+                                      ? "1px solid #95c9b4"
+                                      : "1px solid #c9cccf",
                                     fontSize: "12px",
                                     fontWeight: isUpsellTag ? "600" : "500",
                                   }}
@@ -1291,7 +1488,9 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                                   {isUpsellTag ? `⚡ ${tag}` : tag}
                                   <button
                                     type="button"
-                                    onClick={() => handleRemoveTag(prod.id, tag)}
+                                    onClick={() =>
+                                      handleRemoveTag(prod.id, tag)
+                                    }
                                     style={{
                                       background: "none",
                                       border: "none",
@@ -1313,12 +1512,24 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                           )}
                         </div>
 
-                        <div style={{ display: "flex", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            marginTop: "4px",
+                            flexWrap: "wrap",
+                          }}
+                        >
                           <input
                             type="text"
                             placeholder="Add tag (e.g. Summer or Summer-upshell)..."
                             value={currentNewTag}
-                            onChange={(e: any) => setNewTagsMap((prev) => ({ ...prev, [prod.id]: e.target.value }))}
+                            onChange={(e: any) =>
+                              setNewTagsMap((prev) => ({
+                                ...prev,
+                                [prod.id]: e.target.value,
+                              }))
+                            }
                             onKeyDown={(e: any) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -1346,16 +1557,24 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
                               color: "#ffffff",
                               fontSize: "13px",
                               fontWeight: "600",
-                              cursor: currentNewTag.trim() ? "pointer" : "not-allowed",
+                              cursor: currentNewTag.trim()
+                                ? "pointer"
+                                : "not-allowed",
                               opacity: currentNewTag.trim() ? 1 : 0.6,
                             }}
                           >
                             + Tag
                           </button>
-                          {currentNewTag.trim() && !currentNewTag.trim().endsWith("-upshell") ? (
+                          {currentNewTag.trim() &&
+                          !currentNewTag.trim().endsWith("-upshell") ? (
                             <button
                               type="button"
-                              onClick={() => handleAddTag(prod.id, `${currentNewTag.trim()}-upshell`)}
+                              onClick={() =>
+                                handleAddTag(
+                                  prod.id,
+                                  `${currentNewTag.trim()}-upshell`,
+                                )
+                              }
                               style={{
                                 padding: "6px 12px",
                                 borderRadius: "6px",
@@ -1383,4 +1602,3 @@ function ProductTagsSection({ initialProducts }: ProductTagsSectionProps): JSX.E
     </s-section>
   );
 }
-

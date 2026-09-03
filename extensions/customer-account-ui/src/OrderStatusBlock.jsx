@@ -153,9 +153,6 @@ function Extension() {
   const [editLimit, setEditLimit] = useState(null);
   const [remainingTime, setRemainingTime] = useState("--:--:--");
 
-  useEffect((()=>{
-    console.log("isExpired: ", isExpired);
-  }),[isExpired])
 
   // Helper: returns true only when the service is explicitly enabled.
   const isEnabled = (serviceId) => serviceSettings !== null && serviceSettings[serviceId] === true;

@@ -1,1 +1,0 @@
-import{w as t,u as s,b as o,r as n}from"./chunk-62JRHF6Z-AaD19uZt.js";const i=t(function(){const e=s(),a=o();return n.useEffect(()=>{e(`/app/active-services${a.search}`,{replace:!0})},[e,a.search]),null});export{i as default};
