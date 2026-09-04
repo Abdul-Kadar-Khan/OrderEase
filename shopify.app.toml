@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "d63bb57ad00ed8a805102bb439b85021"
-application_url = "https://orderease-production.up.railway.app"
+application_url = "https://orderease-production-1d80.up.railway.app"
 embedded = true
 name = "OrderEase"
 
