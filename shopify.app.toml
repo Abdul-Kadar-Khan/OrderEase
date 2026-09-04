@@ -47,14 +47,14 @@ api_version = "2026-10"
   topics = [ "app/scopes_update" ]
 
 [auth]
-redirect_urls = [ "https://orderease-production.up.railway.app/api/auth",
-                  "https://orderease-production.up.railway.app/auth/shopify/callback"
+redirect_urls = [ "https://orderease-production-1d80.up.railway.app/api/auth",
+                  "https://orderease-production-1d80.up.railway.app/auth/shopify/callback"
                 ]
 
 [build]
 automatically_update_urls_on_dev = false
 
 [app_proxy]
-url = "https://orderease-production.up.railway.app"
+url = "https://orderease-production-1d80.up.railway.app"
 subpath = "order-ease"  
 prefix = "apps"
